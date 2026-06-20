@@ -2254,11 +2254,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2266,10 +2266,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2305,11 +2312,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2317,10 +2324,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2356,11 +2370,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2368,10 +2382,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2407,11 +2428,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2419,10 +2440,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2458,11 +2486,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2470,10 +2498,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2509,11 +2544,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2521,10 +2556,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2560,11 +2602,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2572,10 +2614,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2611,11 +2660,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2623,10 +2672,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2662,11 +2718,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2674,10 +2730,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2713,11 +2776,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2725,10 +2788,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2764,11 +2834,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2776,10 +2846,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2815,11 +2892,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2827,10 +2904,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2866,11 +2950,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2878,10 +2962,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2917,11 +3008,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2929,10 +3020,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {

@@ -319,9 +319,13 @@ Istilah ini merujuk pada kondisi kesehatan umum yang terkait dengan gaya hidup t
 <div class="note red">
 <strong>Pertimbangan Khusus Obat-obatan:</strong><br/>
 Bergantung pada kondisi (hipertensi, diabetes, hiperlipidemia)<br/>
+
 - Gunakan mode aktivitas berdampak rendah (*low-impact*)<br/>
+
 - &#8593; Risiko hipertermia (Durstine et al., 2009)<br/>
+
 - Modifikasi peralatan (kursi lebar pada sepeda)<br/>
+
 - Latihan kekuatan dapat berfungsi sebagai tambahan berharga untuk latihan aerobik ketika mencoba mempertahankan/meningkatkan massa tubuh tanpa lemak (*lean body weight*) (Durstine et al., 2009).
 </div>
 
@@ -370,8 +374,11 @@ Risiko tersebut dapat &#8595; dengan &#8593; aktivitas fisik.
 </ul>
 
 <div class="note green">
+
 - Aktivitas gaya hidup, bila dilakukan dengan intensitas yang memadai, memberikan efek yang serupa pada berat badan dan kesehatan metabolik layaknya latihan (aerobik) terstruktur dengan intensitas dan volume yang sama.<br/>
+
 - Latihan kekuatan (*resistance*) meningkatkan kebugaran otot tanpa mengorbankan kesehatan metabolik.<br/>
+
 - Oleh karena itu, latihan kekuatan merupakan komponen alami dari rekomendasi aktivitas fisik yang meningkatkan kesehatan.
 </div>
 <div class="note blue">(Bös et al., 2006)</div>
@@ -449,8 +456,11 @@ Jangan menyuntikkan insulin ke bagian tubuh yang akan banyak digunakan selama be
 
 <div class="note blue">
 <strong>FITUR UTAMA PEDOMAN JNC-8 (James et al., 2014):</strong><br/>
+
 - <strong>Target untuk semua pasien &lt; 60 tahun:</strong> TD harus &lt; 140/90 mmHg, terlepas dari ada atau tidaknya diabetes (DM) atau penyakit ginjal kronik (PGK).<br/>
+
 - <strong>Target untuk lansia &gt; 60 tahun tanpa PGK &amp; DM:</strong> &lt; 150/90 mmHg<br/>
+
 - <strong>Target untuk lansia &gt; 60 tahun dengan PGK atau DM atau keduanya:</strong> &lt; 140/90 mmHg.
 </div>
 
@@ -473,7 +483,9 @@ Jangan menyuntikkan insulin ke bagian tubuh yang akan banyak digunakan selama be
 </div>
 
 <div class="note red">
+
 - Kenaikan tekanan darah yang berlebihan harus dihindari selama berolahraga (TDS &gt; 230 mm Hg; TDD &gt; 110 mm Hg).<br/>
+
 - Pembatasan partisipasi dalam olahraga berat harus diterapkan pada pasien dengan hipertrofi ventrikel kiri.
 </div>
 
@@ -2206,11 +2218,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2218,10 +2230,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2257,11 +2276,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2269,10 +2288,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2308,11 +2334,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2320,10 +2346,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2359,11 +2392,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2371,10 +2404,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2410,11 +2450,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2422,10 +2462,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2461,11 +2508,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2473,10 +2520,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2512,11 +2566,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2524,10 +2578,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2563,11 +2624,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2575,10 +2636,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2614,11 +2682,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2626,10 +2694,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
@@ -2665,11 +2740,11 @@ function makeQ(type){
                 const kKey = (item.k || '').toLowerCase();
                 correctAns = item[kKey] || 'No Answer';
             } else {
-                let rawOpts = item.opt || item.options || item.pilihan || item.choices || item.opts || item.o;
-                let ansField = item.a || item.ans || item.answer || item.jawaban;
+                let rawOpts = item.opt ?? item.options ?? item.pilihan ?? item.choices ?? item.opts ?? item.o;
+                let ansField = item.a ?? item.ans ?? item.answer ?? item.jawaban;
                 
                 if (rawOpts && typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
-                    correctAns = rawOpts[ansField] || ansField;
+                    correctAns = rawOpts[ansField] ?? ansField;
                     optsArr = Object.values(rawOpts);
                 } else {
                     if (rawOpts) optsArr = [...rawOpts];
@@ -2677,10 +2752,17 @@ function makeQ(type){
                         correctAns = optsArr[item.correctIndex];
                     } else if (typeof ansField === 'number') {
                         correctAns = optsArr[ansField];
+                    } else if (typeof ansField === 'string' && ansField.length === 1 && /^[A-E]$/i.test(ansField)) {
+                        let idx = ansField.toUpperCase().charCodeAt(0) - 65;
+                        correctAns = optsArr[idx] || ansField;
                     } else {
-                        correctAns = ansField || 'No Answer';
+                        correctAns = ansField ?? 'No Answer';
                     }
                 }
+            }
+            
+            if (optsArr.length > 0 && !optsArr.includes(correctAns) && correctAns !== 'No Answer') {
+                optsArr.push(correctAns);
             }
             
             if (optsArr.length === 0) {
