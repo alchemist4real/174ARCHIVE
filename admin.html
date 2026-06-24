@@ -177,7 +177,7 @@
   <script>
     const supabaseUrl = 'https://hdhvrlkizorscvehttzd.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkaHZybGtpem9yc2N2ZWh0dHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNjMwNzIsImV4cCI6MjA5MjgzOTA3Mn0.m6L3oEVAfyp2TjYmBCfDRo_30rdsWLEsGVZzRZIy3MU';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     let sessionToken = null;
     let currentTree = [];
@@ -192,7 +192,7 @@
     const fileInput = document.getElementById('fileInput');
 
     // Init Auth
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         verifyAdmin(session);
       } else {
@@ -200,7 +200,7 @@
       }
     });
 
-    supabase.auth.onAuthStateChange((event, session) => {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         redirectToHome("Signed out. Redirecting...");
       }
@@ -239,7 +239,7 @@
     }
 
     document.getElementById('btnSignOut').onclick = async () => {
-      await supabase.auth.signOut();
+      await supabaseClient.auth.signOut();
     };
 
     // Load Data
