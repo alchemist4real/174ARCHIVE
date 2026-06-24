@@ -162,6 +162,77 @@
     .btn-card.primary { background: rgba(226,255,74,0.1); color: var(--accent); }
     .btn-card.primary:hover { background: rgba(226,255,74,0.2); }
 
+    /* File Grid Mode */
+    .file-browser.grid-mode {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 16px;
+      padding: 24px;
+    }
+    .file-browser.grid-mode .file-item {
+      flex-direction: column;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 16px;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+    }
+    .file-browser.grid-mode .file-icon {
+      margin: 0 0 12px 0;
+    }
+    .file-browser.grid-mode .file-icon svg { width: 32px; height: 32px; stroke-width: 1.5; }
+    .file-browser.grid-mode .file-actions {
+      position: absolute;
+      bottom: 8px; left: 0; right: 0;
+      display: flex; gap: 4px; justify-content: center;
+      background: var(--bg-card); padding: 4px; border-top: 1px solid var(--border-light); border-radius: 0 0 8px 8px;
+    }
+    .file-checkbox {
+      margin-right: 12px;
+      accent-color: var(--accent);
+      width: 16px; height: 16px;
+      cursor: pointer;
+    }
+    .file-browser.grid-mode .file-checkbox {
+      position: absolute;
+      top: 8px; left: 8px;
+      margin: 0;
+    }
+    
+    /* Drag & Drop */
+    #viewFiles { position: relative; }
+    #dragOverlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 10, 10, 0.9);
+      border: 3px dashed var(--accent);
+      border-radius: 12px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 50; opacity: 0; pointer-events: none; transition: 0.2s;
+    }
+    #dragOverlay.drag-active { opacity: 1; pointer-events: all; }
+    
+    /* Lightbox Modal */
+    #lightboxModal {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85); z-index: 200;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    #lightboxModal.hidden { display: none; }
+    #lightboxClose {
+      position: absolute; top: 24px; right: 24px;
+      background: transparent; color: #fff; border: none; font-size: 32px; cursor: pointer;
+    }
+    #lightboxContent {
+      max-width: 90%; max-height: 80%;
+      object-fit: contain; border-radius: 4px;
+    }
+    #lightboxText {
+      width: 80%; height: 80%; background: var(--bg-card); color: var(--text-main);
+      padding: 24px; border-radius: 8px; overflow: auto; font-family: var(--font-mono); font-size: 13px;
+      border: 1px solid var(--border-light); white-space: pre-wrap;
+    }
+
     /* Utilities */
     .hidden { display: none !important; }
   </style>
@@ -201,6 +272,10 @@
       
       <!-- FILES VIEW -->
       <div id="viewFiles" class="view-section active">
+        <div id="dragOverlay">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          <div style="font-size:18px; font-weight:600;">Drop files here to upload</div>
+        </div>
         <div class="toolbar">
           <button id="btnUpload" class="btn primary" style="display:flex; align-items:center; gap:6px;">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
@@ -211,10 +286,21 @@
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
             New Folder
           </button>
-          <button id="btnRefresh" class="btn" style="margin-left:auto; display:flex; align-items:center; gap:6px;">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-            Refresh
-          </button>
+          
+          <div style="margin-left:auto; display:flex; gap:8px;">
+            <button id="btnBulkDelete" class="btn danger hidden" style="display:none; align-items:center; gap:6px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              Delete Selected (<span id="bulkCount">0</span>)
+            </button>
+            <button id="btnToggleView" class="btn" style="display:flex; align-items:center; gap:6px;">
+              <svg id="iconList" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              Toggle View
+            </button>
+            <button id="btnRefresh" class="btn" style="display:flex; align-items:center; gap:6px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              Refresh
+            </button>
+          </div>
         </div>
 
         <div class="path-bar" id="pathBar">
@@ -247,6 +333,13 @@
     </div>
   </div>
 
+  <!-- Lightbox Modal -->
+  <div id="lightboxModal" class="hidden">
+    <button id="lightboxClose">&times;</button>
+    <img id="lightboxImage" class="hidden" src="" />
+    <div id="lightboxText" class="hidden"></div>
+  </div>
+
   <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -257,6 +350,8 @@
     let sessionToken = null;
     let currentTree = [];
     let currentPath = '';
+    let isGridMode = false;
+    let selectedFiles = new Set();
 
     const authOverlay = document.getElementById('authOverlay');
     const authMessage = document.getElementById('authMessage');
@@ -413,19 +508,27 @@
         div.className = 'file-item';
         
         let icon = '';
+        const isImg = item.name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
         if (item.type === 'folder') {
           icon = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
-        } else if (item.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+        } else if (isImg) {
           icon = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>';
         } else {
           icon = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>';
         }
         
+        let cbHtml = '';
+        if (item.type !== 'folder') {
+          cbHtml = `<input type="checkbox" class="file-checkbox" data-path="${item.path}" data-sha="${item.sha}" ${selectedFiles.has(item.path) ? 'checked' : ''}>`;
+        }
+        
         div.innerHTML = `
+          ${cbHtml}
           <div class="file-icon">${icon}</div>
           <div class="file-name" title="${item.name}">${item.name}</div>
           <div class="file-actions">
-            <button class="btn danger btn-del" data-path="${item.path}" data-sha="${item.sha}" data-type="${item.type}">Delete</button>
+            ${item.type !== 'folder' ? `<button class="btn btn-rename" data-path="${item.path}" style="padding:4px 8px; font-size:11px;">Rename</button>` : ''}
+            <button class="btn danger btn-del" data-path="${item.path}" data-sha="${item.sha}" data-type="${item.type}" style="padding:4px 8px; font-size:11px;">Delete</button>
           </div>
         `;
 
@@ -436,22 +539,46 @@
           };
         } else {
           div.querySelector('.file-name').onclick = () => {
-             window.open(`https://github.com/alchemist4real/MR-CAPSULES/blob/main/${item.path}`, '_blank');
+             showPreview(item.path, isImg);
+          };
+        }
+
+        const cb = div.querySelector('.file-checkbox');
+        if (cb) {
+          cb.onchange = (e) => {
+            if (e.target.checked) selectedFiles.add(item.path);
+            else selectedFiles.delete(item.path);
+            updateBulkDeleteUI();
+          };
+        }
+
+        const btnRename = div.querySelector('.btn-rename');
+        if (btnRename) {
+          btnRename.onclick = (e) => {
+            const oldPath = item.path;
+            const newName = prompt("Enter new file name:", item.name);
+            if (!newName || newName === item.name) return;
+            const newPath = currentPath + newName;
+            
+            e.target.textContent = '...';
+            adminAction('rename_file', { path: oldPath, newPath: newPath })
+              .then(() => loadTree());
           };
         }
 
         div.querySelector('.btn-del').onclick = (e) => {
-          const type = e.target.getAttribute('data-type');
           const p = e.target.getAttribute('data-path');
-          const sha = e.target.getAttribute('data-sha');
+          const s = e.target.getAttribute('data-sha');
+          const t = e.target.getAttribute('data-type');
           
-          if (type === 'folder') {
-            alert("To delete a folder, you must delete all files inside it.");
+          if(t === 'folder') {
+            alert('Folder deletion via UI not supported directly. Delete files inside it.');
             return;
           }
 
-          if (confirm(`Are you sure you want to delete:\n${p} ?\nThis action cannot be undone.`)) {
-            adminAction('delete', { path: p, sha: sha });
+          if(confirm('Delete ' + p + '?')) {
+            e.target.textContent = '...';
+            adminAction('delete', { path: p, sha: s }).then(() => loadTree());
           }
         };
 
@@ -488,35 +615,126 @@
     // Actions
     document.getElementById('btnRefresh').onclick = loadTree;
     
-    document.getElementById('btnUpload').onclick = () => fileInput.click();
-    fileInput.onchange = (e) => {
-      const files = e.target.files;
-      if (!files.length) return;
+    document.getElementById('btnToggleView').onclick = () => {
+      isGridMode = !isGridMode;
+      if (isGridMode) {
+        fileBrowser.classList.add('grid-mode');
+        document.getElementById('iconList').innerHTML = '<rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>';
+      } else {
+        fileBrowser.classList.remove('grid-mode');
+        document.getElementById('iconList').innerHTML = '<line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line>';
+      }
+    };
+
+    document.getElementById('btnBulkDelete').onclick = () => {
+      if (selectedFiles.size === 0) return;
+      if (!confirm(`Delete ${selectedFiles.size} selected files?`)) return;
       
+      const filesToDelete = [];
+      selectedFiles.forEach(path => {
+        const item = currentTree.find(i => i.path === path);
+        if (item && item.type !== 'folder') {
+          filesToDelete.push({ path: item.path, sha: item.sha });
+        }
+      });
+      
+      document.getElementById('btnBulkDelete').textContent = 'Deleting...';
+      adminAction('delete_files', { files: filesToDelete }).then(() => {
+        selectedFiles.clear();
+        updateBulkDeleteUI();
+        loadTree();
+      });
+    };
+
+    const viewFilesEl = document.getElementById('viewFiles');
+    const dragOverlay = document.getElementById('dragOverlay');
+    
+    viewFilesEl.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dragOverlay.classList.add('drag-active');
+    });
+    viewFilesEl.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      if (e.relatedTarget && !viewFilesEl.contains(e.relatedTarget)) {
+        dragOverlay.classList.remove('drag-active');
+      }
+    });
+    viewFilesEl.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dragOverlay.classList.remove('drag-active');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        uploadFilesSequential(Array.from(e.dataTransfer.files));
+      }
+    });
+
+    document.getElementById('lightboxClose').onclick = () => {
+      document.getElementById('lightboxModal').classList.add('hidden');
+      document.getElementById('lightboxImage').classList.add('hidden');
+      document.getElementById('lightboxText').classList.add('hidden');
+    };
+
+    function updateBulkDeleteUI() {
+      const btn = document.getElementById('btnBulkDelete');
+      if (selectedFiles.size > 0) {
+        btn.style.display = 'flex';
+        document.getElementById('bulkCount').textContent = selectedFiles.size;
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+
+    async function showPreview(path, isImg) {
+      const modal = document.getElementById('lightboxModal');
+      const img = document.getElementById('lightboxImage');
+      const txt = document.getElementById('lightboxText');
+      modal.classList.remove('hidden');
+      img.classList.add('hidden');
+      txt.classList.add('hidden');
+
+      const rawUrl = `https://raw.githubusercontent.com/alchemist4real/MR-CAPSULES/main/${path}`;
+
+      if (isImg) {
+        img.src = rawUrl;
+        img.classList.remove('hidden');
+      } else {
+        txt.textContent = "Loading preview...";
+        txt.classList.remove('hidden');
+        try {
+          const r = await fetch(rawUrl);
+          const text = await r.text();
+          txt.textContent = text;
+        } catch(e) {
+          txt.textContent = "Failed to load content preview. You can open it in GitHub directly: " + `https://github.com/alchemist4real/MR-CAPSULES/blob/main/${path}`;
+        }
+      }
+    }
+    
+    async function uploadFilesSequential(files) {
       let processed = 0;
       statusText.textContent = `Uploading 0/${files.length}...`;
 
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const base64 = ev.target.result.split(',')[1];
-          const path = currentPath + file.name;
-          
-          let existingSha = null;
-          const existing = currentTree.find(i => i.path === path);
-          if (existing) existingSha = existing.sha;
+      for (const file of files) {
+        const base64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+          reader.readAsDataURL(file);
+        });
 
-          adminAction('upload', { path, contentBase64: base64, sha: existingSha }).then(() => {
-            processed++;
-            statusText.textContent = `Uploaded ${processed}/${files.length}`;
-            if(processed === files.length) {
-              setTimeout(loadTree, 1500);
-              fileInput.value = '';
-            }
-          });
-        };
-        reader.readAsDataURL(file);
-      });
+        const path = currentPath + file.name;
+        const existing = currentTree.find(i => i.path === path);
+        
+        await adminAction('upload', { path, contentBase64: base64, sha: existing ? existing.sha : null });
+        processed++;
+        statusText.textContent = `Uploaded ${processed}/${files.length}`;
+      }
+      loadTree();
+    }
+
+    document.getElementById('btnUpload').onclick = () => fileInput.click();
+    fileInput.onchange = (e) => {
+      if (e.target.files.length > 0) {
+        uploadFilesSequential(Array.from(e.target.files));
+      }
     };
 
     document.getElementById('btnNewFolder').onclick = () => {
@@ -531,10 +749,11 @@
     // Tabs Logic
     document.querySelectorAll('.tab').forEach(t => {
       t.onclick = (e) => {
+        const targetTab = e.currentTarget;
         document.querySelectorAll('.tab').forEach(tx => tx.classList.remove('active'));
         document.querySelectorAll('.view-section').forEach(vx => vx.classList.remove('active'));
-        e.target.classList.add('active');
-        document.getElementById(e.target.getAttribute('data-target')).classList.add('active');
+        targetTab.classList.add('active');
+        document.getElementById(targetTab.getAttribute('data-target')).classList.add('active');
       }
     });
 

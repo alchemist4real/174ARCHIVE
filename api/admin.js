@@ -114,6 +114,45 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
+    if (action === 'delete_files') {
+      const { files } = req.body; // Array of {path, sha}
+      if (!files || !Array.isArray(files)) throw new Error("Missing files array");
+      
+      const deletePromises = files.map(f => 
+        ghApi('DELETE', `/contents/${f.path}`, { message: `admin: bulk delete ${f.path}`, sha: f.sha })
+      );
+      
+      await Promise.all(deletePromises);
+      return res.status(200).json({ success: true });
+    }
+
+    if (action === 'rename_file') {
+      const { newPath } = req.body;
+      if (!newPath || !path) throw new Error("Missing path or newPath");
+      
+      // 1. Get original file content
+      const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+        headers: { 'Authorization': `Bearer ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (!getRes.ok) throw new Error("Original file not found");
+      const fileData = await getRes.json();
+      
+      // 2. Create new file with same content
+      const putRes = await ghApi('PUT', `/contents/${newPath}`, {
+        message: `admin: rename ${path} to ${newPath}`,
+        content: fileData.content.replace(/\n/g, '') // GitHub requires continuous base64 without newlines
+      });
+      if (!putRes.ok) throw new Error("Failed to create renamed file");
+      
+      // 3. Delete old file
+      await ghApi('DELETE', `/contents/${path}`, {
+        message: `admin: clean up old file ${path} after rename`,
+        sha: fileData.sha
+      });
+      
+      return res.status(200).json({ success: true });
+    }
+
     if (action === 'add_admin') {
       if (!isSuperAdmin) return res.status(403).json({ error: 'Only SuperAdmin can add admins' });
       if (!adminsList.includes(newAdmin)) {
