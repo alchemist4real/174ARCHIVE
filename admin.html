@@ -165,8 +165,14 @@
   </div>
 
   <div class="tabs" id="adminTabs" style="display:none;">
-    <div class="tab active" data-target="viewFiles">📁 Files</div>
-    <div class="tab" data-target="viewUsers">👥 Users</div>
+    <div class="tab active" data-target="viewFiles" style="display:flex; align-items:center; gap:8px;">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+      Files
+    </div>
+    <div class="tab" data-target="viewUsers" style="display:flex; align-items:center; gap:8px;">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      Users
+    </div>
   </div>
 
   <div class="content-area">
@@ -175,10 +181,19 @@
       <!-- FILES VIEW -->
       <div id="viewFiles" class="view-section active">
         <div class="toolbar">
-          <button id="btnUpload" class="btn primary">📤 Upload File</button>
+          <button id="btnUpload" class="btn primary" style="display:flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            Upload File
+          </button>
           <input type="file" id="fileInput" class="hidden" multiple>
-          <button id="btnNewFolder" class="btn">📁 New Folder</button>
-          <button id="btnRefresh" class="btn" style="margin-left:auto;">🔄 Refresh</button>
+          <button id="btnNewFolder" class="btn" style="display:flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+            New Folder
+          </button>
+          <button id="btnRefresh" class="btn" style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            Refresh
+          </button>
         </div>
 
         <div class="path-bar" id="pathBar">
@@ -193,20 +208,23 @@
 
       <!-- USERS VIEW -->
       <div id="viewUsers" class="view-section">
-        <div class="toolbar">
-          <button id="btnRefreshUsers" class="btn" style="margin-left:auto;">🔄 Refresh Users</button>
+        <div class="toolbar" style="justify-content:space-between;">
+          
+          <!-- Super Admin Add -->
+          <div id="superAdminSection" style="display:none; align-items:center; gap:12px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <input type="text" id="newAdminInput" class="auth-input" placeholder="New Admin Email / Username" style="width:250px; padding:6px 12px; font-size:13px;">
+            <button id="btnAddAdmin" class="btn">Add Admin</button>
+            <span id="adminMsg" style="font-size:12px; color:var(--text-muted);"></span>
+          </div>
+
+          <button id="btnRefreshUsers" class="btn" style="display:flex; align-items:center; gap:6px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            Refresh
+          </button>
         </div>
         <div class="file-browser" id="userBrowser">
           <!-- User items injected here -->
-        </div>
-      </div>
-
-      <div id="superAdminSection">
-        <div style="font-size:11px; margin-bottom:8px; color:var(--text-muted);">SUPER ADMIN CONTROLS</div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <input type="text" id="newAdminInput" class="auth-input" placeholder="New Admin Email/Username" style="width:250px;">
-          <button id="btnAddAdmin" class="btn">Add Admin</button>
-          <span id="adminMsg" style="font-size:12px; margin-left:12px;"></span>
         </div>
       </div>
 
@@ -267,7 +285,7 @@
           authOverlay.classList.add('hidden');
           window.adminsList = data.admins || [];
           if (data.isSuperAdmin) {
-            document.getElementById('superAdminSection').style.display = 'block';
+            document.getElementById('superAdminSection').style.display = 'flex';
             document.getElementById('adminTabs').style.display = 'flex';
             loadUsers();
           }
@@ -382,7 +400,14 @@
         const div = document.createElement('div');
         div.className = 'file-item';
         
-        const icon = item.type === 'folder' ? '📁' : (item.name.endsWith('.html') ? '📄' : '🖼️');
+        let icon = '';
+        if (item.type === 'folder') {
+          icon = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
+        } else if (item.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+          icon = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>';
+        } else {
+          icon = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>';
+        }
         
         div.innerHTML = `
           <div class="file-icon">${icon}</div>
