@@ -24,6 +24,12 @@ const adminMsg = document.getElementById('adminMsg');
 
 // Automatically hook into Supabase auth changes
 if (window.supabase) {
+  window.supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session && session.access_token) {
+      checkAdminStatus(session.access_token);
+    }
+  });
+
   window.supabase.auth.onAuthStateChange(async (event, session) => {
     if (session && session.access_token) {
       checkAdminStatus(session.access_token);
