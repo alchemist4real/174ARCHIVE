@@ -1277,6 +1277,17 @@ try {
       authMsg.style.color = isError ? '#FF6B6B' : '#69DB7C';
     }
 
+    function fmtTime(sec) {
+      const h = Math.floor(sec / 3600).toString().padStart(2, '0');
+      const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
+
+    let baseUptime = 0;
+    let sessionUptime = 0;
+    let localUptime = 0;
+
     // Check initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
@@ -1287,6 +1298,12 @@ try {
         }
 
         if(session.user && session.user.user_metadata) {
+          if (session.user.user_metadata.uptime) {
+            baseUptime = session.user.user_metadata.uptime;
+            localUptime = baseUptime + sessionUptime;
+            const vl = document.getElementById('valLocal');
+            if(vl) vl.textContent = fmtTime(localUptime);
+          }
           if (session.user.user_metadata.username) {
             currentUsername = session.user.user_metadata.username;
             authUsername.value = currentUsername;
@@ -1314,6 +1331,12 @@ try {
         }
 
         if(session && session.user && session.user.user_metadata) {
+          if (session.user.user_metadata.uptime) {
+            baseUptime = session.user.user_metadata.uptime;
+            localUptime = baseUptime + sessionUptime;
+            const vl = document.getElementById('valLocal');
+            if(vl) vl.textContent = fmtTime(localUptime);
+          }
           if (session.user.user_metadata.username) {
             currentUsername = session.user.user_metadata.username;
             authUsername.value = currentUsername;
@@ -1451,14 +1474,6 @@ try {
       supabase.auth.signOut();
     });
 
-    function fmtTime(sec) {
-      const h = Math.floor(sec / 3600).toString().padStart(2, '0');
-      const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
-      const s = (sec % 60).toString().padStart(2, '0');
-      return `${h}:${m}:${s}`;
-    }
-
-    let localUptime = 0;
     const valLocal = document.getElementById('valLocal');
     const valGlobal = document.getElementById('valGlobal');
     const onlineCount = document.getElementById('onlineCount');
@@ -1522,10 +1537,22 @@ try {
 
       // Uptime Tick
       setInterval(async () => {
-        localUptime += 10;
+        sessionUptime += 10;
+        localUptime = baseUptime + sessionUptime;
         valLocal.textContent = fmtTime(localUptime);
         
-        await supabase.rpc('increment_uptime', { seconds: 10 }).catch(e => console.log('Supabase sync error', e));
+        if (sessionUptime % 60 === 0) {
+          supabase.auth.updateUser({ data: { uptime: localUptime } }).catch(e => console.log('Uptime save error', e));
+        }
+        
+        await supabase.rpc('increment_uptime', { seconds: 10 }).catch(async (e) => {
+          console.log('Supabase sync error', e);
+          // Fallback if RPC fails
+          const { data } = await supabase.from('global_stats').select('total_uptime').eq('id', 1).single();
+          if (data) {
+             await supabase.from('global_stats').update({ total_uptime: data.total_uptime + 10 }).eq('id', 1);
+          }
+        });
         
         const { data, error } = await supabase.from('global_stats').select('total_uptime').eq('id', 1).single();
         if (data) {
@@ -1534,6 +1561,12 @@ try {
           valGlobal.textContent = '00:00:00'; // Row doesn't exist yet
         }
       }, 10000);
+
+      window.addEventListener('beforeunload', () => {
+        if (sessionUptime % 60 !== 0) {
+          supabase.auth.updateUser({ data: { uptime: localUptime } });
+        }
+      });
 
       supabase.from('global_stats').select('total_uptime').eq('id', 1).single().then(({data, error}) => {
         if (data) valGlobal.textContent = fmtTime(data.total_uptime);
