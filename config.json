@@ -1,4 +1,5 @@
 {
   "allowSignup": true,
-  "maintenanceMode": false
+  "maintenanceMode": false,
+  "bannedDevices": []
 }

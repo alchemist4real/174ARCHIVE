@@ -1245,10 +1245,38 @@ try {
     const btnForgotPwd = document.getElementById('btnForgotPwd');
     const authMsg = document.getElementById('authMsg');
 
+    function getDeviceId() {
+      let id = localStorage.getItem('capsules_device_id');
+      if (!id) {
+        id = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+        localStorage.setItem('capsules_device_id', id);
+      }
+      return id;
+    }
+
+    function syncDeviceId(session) {
+      if(session && session.user && session.user.user_metadata) {
+        if(session.user.user_metadata.deviceId !== getDeviceId()) {
+          supabase.auth.updateUser({ data: { deviceId: getDeviceId() } }).catch(e => console.log('Device sync error', e));
+        }
+      }
+    }
+
     let isSignupAllowed = true;
     fetch('https://raw.githubusercontent.com/alchemist4real/MR-CAPSULES/main/config.json?t=' + Date.now())
       .then(r => r.json())
       .then(config => {
+        const dId = getDeviceId();
+        if (config.bannedDevices && config.bannedDevices.includes(dId)) {
+          document.body.innerHTML = `
+            <div style="display:flex; height:100vh; width:100vw; background:#0a0a0a; color:#ff3333; justify-content:center; align-items:center; flex-direction:column; font-family: 'Courier New', Courier, monospace; text-align:center; position:fixed; z-index:99999999; top:0; left:0;">
+              <h1 class="glitch-text" style="font-size:3rem; margin-bottom:20px; letter-spacing:2px;">SORRY FOR KICKING YOU OUT OF OUR SANCTUARY</h1>
+              <p style="color:#888; font-size:1.2rem;">Your device has been permanently blocked.</p>
+            </div>
+          `;
+          return;
+        }
+
         if (config.maintenanceMode) {
           const mo = document.getElementById('maintenanceOverlay');
           if(mo) mo.style.display = 'flex';
@@ -1330,6 +1358,7 @@ try {
             }
           }
         }
+        syncDeviceId(session);
         authOverlay.classList.add('hidden');
         startTracking();
       }
@@ -1362,6 +1391,7 @@ try {
               applyPerfMode(pref, false);
             }
           }
+          syncDeviceId(session);
         }
         authOverlay.classList.add('hidden');
         startTracking();
@@ -1553,6 +1583,15 @@ try {
       }).on('broadcast', { event: 'maintenance_off' }, () => {
         const mo = document.getElementById('maintenanceOverlay');
         if(mo) mo.style.display = 'none';
+      }).on('broadcast', { event: 'ban_device' }, (payload) => {
+        if(payload.payload && payload.payload.deviceId === getDeviceId()) {
+          document.body.innerHTML = `
+            <div style="display:flex; height:100vh; width:100vw; background:#0a0a0a; color:#ff3333; justify-content:center; align-items:center; flex-direction:column; font-family: 'Courier New', Courier, monospace; text-align:center; position:fixed; z-index:99999999; top:0; left:0;">
+              <h1 class="glitch-text" style="font-size:3rem; margin-bottom:20px; letter-spacing:2px;">SORRY FOR KICKING YOU OUT OF OUR SANCTUARY</h1>
+              <p style="color:#888; font-size:1.2rem;">Your device has been permanently blocked.</p>
+            </div>
+          `;
+        }
       }).subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await sessionRoom.track({ user: 'auth-user', joined_at: new Date().toISOString() });
