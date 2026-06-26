@@ -1150,6 +1150,16 @@ try {
     const btnSignIn = document.getElementById('btnSignIn');
     const btnSignUp = document.getElementById('btnSignUp');
     const authMsg = document.getElementById('authMsg');
+
+    let isSignupAllowed = true;
+    fetch('https://raw.githubusercontent.com/alchemist4real/MR-CAPSULES/main/config.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(config => {
+        isSignupAllowed = config.allowSignup !== false;
+        if (!isSignupAllowed && btnSignUp) {
+          btnSignUp.style.display = 'none';
+        }
+      }).catch(e => console.error('Failed to load config', e));
     const btnLogout = document.getElementById('btnLogout');
     
     let isTracking = false;
@@ -1279,6 +1289,10 @@ try {
     });
 
     btnSignUp.addEventListener('click', async () => {
+      if (!isSignupAllowed) {
+        showAuthMsg("Pendaftaran saat ini dinonaktifkan oleh administrator.", true);
+        return;
+      }
       if (!authEmail.value || !authPassword.value) return;
       if (!isValidEmail(authEmail.value)) {
         showAuthMsg("INVALID EMAIL FORMAT", true);
