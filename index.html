@@ -930,7 +930,7 @@ async function backgroundSync() {
 
 function loadCatalog(newCatalog, restoreIndex = -1) {
   catalog = newCatalog;
-  catalog.sort((a,b) => a.title.localeCompare(b.title));
+  catalog.sort((a,b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
   
   let shuffledCovers = [...covers].sort(() => 0.5 - Math.random());
   let coverIndex = 0;
