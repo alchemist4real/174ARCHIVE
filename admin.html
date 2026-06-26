@@ -544,6 +544,8 @@
       } else {
         redirectToHome("Not logged in. Redirecting...");
       }
+    }).catch(err => {
+      redirectToHome("Session error: " + err.message);
     });
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -557,11 +559,16 @@
       document.getElementById('userBadge').textContent = session.user.email;
       
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        
         const res = await fetch('/api/admin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
-          body: JSON.stringify({ action: 'check' })
+          body: JSON.stringify({ action: 'check' }),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
         const data = await res.json();
         
         if (res.ok && data.success) {
@@ -598,7 +605,7 @@
           redirectToHome(data.error || "Forbidden. You are not an admin.");
         }
       } catch(e) {
-        redirectToHome("Verification failed: " + e.message);
+        redirectToHome(e.name === 'AbortError' ? "Verification timed out (15s)." : "Verification failed: " + e.message);
       }
     }
 
