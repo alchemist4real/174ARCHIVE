@@ -269,8 +269,13 @@ html,body{
 }
 .art-dot-grid {
   position: absolute; width: 100%; height: 100%; z-index: 1;
-  background-image: radial-gradient(var(--border-heavy) 1.5px, transparent 1.5px);
-  background-size: 14px 14px; opacity: 0.4;
+  background-image: radial-gradient(var(--text-main) 1.5px, transparent 1.5px);
+  background-size: 14px 14px; opacity: 0.35;
+  transition: opacity 0.3s, background-image 0.3s;
+}
+.card-active .art-dot-grid {
+  background-image: radial-gradient(var(--bg-main) 1.5px, transparent 1.5px);
+  opacity: 0.6;
 }
 .art-name{
   font-family:'Courier New', Courier, monospace;
