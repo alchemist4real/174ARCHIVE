@@ -233,9 +233,70 @@
       border: 1px solid var(--border-light); white-space: pre-wrap;
     }
 
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 8px; padding: 0 24px; background: var(--bg-card);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .tab {
+      padding: 12px 16px; font-size: 14px; font-weight: 500; color: var(--text-muted);
+      cursor: pointer; border-bottom: 2px solid transparent; transition: 0.2s;
+    }
+    .tab:hover { color: var(--text-main); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* View Sections */
+    .view-section { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .view-section.active { display: flex; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-main); }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+    /* Custom Modal */
+    .custom-modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8); z-index: 300;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .custom-modal {
+      background: var(--bg-card); border: 1px solid var(--border-light);
+      border-radius: 8px; width: 90%; max-width: 400px; padding: 24px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .custom-modal.editor-modal {
+      max-width: 800px; width: 95%; height: 85vh;
+    }
+    .modal-title { font-size: 18px; font-weight: 600; color: var(--text-main); }
+    .modal-input {
+      background: var(--bg-main); border: 1px solid var(--border-light); color: var(--text-main);
+      padding: 10px 12px; border-radius: 4px; outline: none; font-family: var(--font-mono); font-size: 14px;
+    }
+    .modal-input:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+    .editor-container { flex: 1; overflow: hidden; border: 1px solid var(--border-light); border-radius: 4px; }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .toolbar { flex-wrap: wrap; }
+      .toolbar > div { width: 100%; justify-content: space-between; }
+      .file-actions { opacity: 1 !important; position: static !important; display: flex; gap: 4px; background: transparent !important; padding: 0 !important; border: none !important; margin-top: 8px; }
+      .file-browser.grid-mode { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+      #lightboxText { width: 95%; height: 95%; font-size: 12px; padding: 16px; }
+      .navbar { padding: 0 16px; }
+      .file-item { flex-direction: column; align-items: flex-start; }
+      .file-icon { margin-bottom: 8px; }
+      .file-name { width: 100%; margin-bottom: 8px; }
+      .path-bar { overflow-x: auto; white-space: nowrap; }
+    }
+
     /* Utilities */
     .hidden { display: none !important; }
-  </style>
+  <!-- CodeMirror -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/darcula.min.css">
 </head>
 <body>
 
@@ -288,6 +349,7 @@
           </button>
           
           <div style="margin-left:auto; display:flex; gap:8px;">
+            <input type="text" id="searchInput" class="auth-input" placeholder="Search files..." style="width: 150px; font-size: 13px;">
             <button id="btnBulkDelete" class="btn danger hidden" style="display:none; align-items:center; gap:6px;">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
               Delete Selected (<span id="bulkCount">0</span>)
@@ -340,6 +402,35 @@
     <div id="lightboxText" class="hidden"></div>
   </div>
 
+  <!-- Generic Prompt Modal -->
+  <div id="promptModal" class="custom-modal-overlay hidden">
+    <div class="custom-modal">
+      <div class="modal-title" id="promptTitle">Enter value</div>
+      <input type="text" id="promptInput" class="modal-input" />
+      <div class="modal-actions">
+        <button id="promptCancel" class="btn">Cancel</button>
+        <button id="promptConfirm" class="btn primary">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HTML Editor Modal -->
+  <div id="editorModal" class="custom-modal-overlay hidden">
+    <div class="custom-modal editor-modal">
+      <div class="modal-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <span id="editorTitle">Editing File</span>
+        <button id="editorClose" style="background:transparent; color:#fff; border:none; font-size:24px; cursor:pointer;">&times;</button>
+      </div>
+      <div class="editor-container">
+        <textarea id="codeEditor"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button id="editorCancel" class="btn">Cancel</button>
+        <button id="editorSave" class="btn primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -360,6 +451,65 @@
     const pathBreadcrumbs = document.getElementById('pathBreadcrumbs');
     const itemCount = document.getElementById('itemCount');
     const fileInput = document.getElementById('fileInput');
+
+    // Search Filter Logic
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const val = e.target.value.toLowerCase();
+      document.querySelectorAll('.file-item').forEach(el => {
+        const name = el.querySelector('.file-name').textContent.toLowerCase();
+        if (name.includes(val)) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+    });
+
+    // Custom Modals Logic
+    function customPrompt(title, defaultValue = '') {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('promptModal');
+        const titleEl = document.getElementById('promptTitle');
+        const inputEl = document.getElementById('promptInput');
+        const btnCancel = document.getElementById('promptCancel');
+        const btnConfirm = document.getElementById('promptConfirm');
+
+        titleEl.textContent = title;
+        inputEl.value = defaultValue;
+        inputEl.style.display = 'block';
+        modal.classList.remove('hidden');
+        inputEl.focus();
+
+        const cleanup = () => {
+          modal.classList.add('hidden');
+          btnCancel.onclick = null;
+          btnConfirm.onclick = null;
+        };
+
+        btnCancel.onclick = () => { cleanup(); resolve(null); };
+        btnConfirm.onclick = () => { cleanup(); resolve(inputEl.value); };
+      });
+    }
+
+    function customConfirm(title) {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('promptModal');
+        const titleEl = document.getElementById('promptTitle');
+        const inputEl = document.getElementById('promptInput');
+        const btnCancel = document.getElementById('promptCancel');
+        const btnConfirm = document.getElementById('promptConfirm');
+
+        titleEl.textContent = title;
+        inputEl.style.display = 'none';
+        modal.classList.remove('hidden');
+
+        const cleanup = () => {
+          modal.classList.add('hidden');
+          btnCancel.onclick = null;
+          btnConfirm.onclick = null;
+        };
+
+        btnCancel.onclick = () => { cleanup(); resolve(false); };
+        btnConfirm.onclick = () => { cleanup(); resolve(true); };
+      });
+    }
 
     // Init Auth
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
@@ -527,7 +677,12 @@
           <div class="file-icon">${icon}</div>
           <div class="file-name" title="${item.name}">${item.name}</div>
           <div class="file-actions">
-            ${item.type !== 'folder' ? `<button class="btn btn-rename" data-path="${item.path}" style="padding:4px 8px; font-size:11px;">Rename</button>` : ''}
+            ${item.type !== 'folder' ? `
+              ${item.name.endsWith('.html') ? `<button class="btn btn-edit-code" data-path="${item.path}" data-sha="${item.sha}" style="padding:4px 8px; font-size:11px;">Edit Code</button>` : ''}
+              <button class="btn btn-download" data-path="${item.path}" style="padding:4px 8px; font-size:11px;">Download</button>
+              <button class="btn btn-move" data-path="${item.path}" style="padding:4px 8px; font-size:11px;">Move</button>
+              <button class="btn btn-rename" data-path="${item.path}" style="padding:4px 8px; font-size:11px;">Rename</button>
+            ` : ''}
             <button class="btn danger btn-del" data-path="${item.path}" data-sha="${item.sha}" data-type="${item.type}" style="padding:4px 8px; font-size:11px;">Delete</button>
           </div>
         `;
@@ -552,11 +707,71 @@
           };
         }
 
+        const btnEdit = div.querySelector('.btn-edit-code');
+        if (btnEdit) {
+          btnEdit.onclick = async (e) => {
+            const rawUrl = `https://raw.githubusercontent.com/alchemist4real/MR-CAPSULES/main/${item.path}`;
+            const r = await fetch(rawUrl);
+            const text = await r.text();
+            
+            const modal = document.getElementById('editorModal');
+            document.getElementById('editorTitle').textContent = `Editing: ${item.name}`;
+            modal.classList.remove('hidden');
+            
+            if (!window.cmEditor) {
+              window.cmEditor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+                lineNumbers: true,
+                mode: "htmlmixed",
+                theme: "darcula"
+              });
+            }
+            window.cmEditor.setValue(text);
+            setTimeout(() => window.cmEditor.refresh(), 100);
+            
+            document.getElementById('editorCancel').onclick = () => { modal.classList.add('hidden'); };
+            document.getElementById('editorSave').onclick = async (ev) => {
+              ev.target.textContent = 'Saving...';
+              const newContent = window.cmEditor.getValue();
+              const base64 = btoa(unescape(encodeURIComponent(newContent)));
+              await adminAction('upload', { path: item.path, contentBase64: base64, sha: item.sha });
+              modal.classList.add('hidden');
+              ev.target.textContent = 'Save Changes';
+              loadTree();
+            };
+          };
+        }
+
+        const btnDownload = div.querySelector('.btn-download');
+        if (btnDownload) {
+          btnDownload.onclick = () => {
+            const rawUrl = `https://raw.githubusercontent.com/alchemist4real/MR-CAPSULES/main/${item.path}`;
+            const a = document.createElement('a');
+            a.href = rawUrl;
+            a.download = item.name;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          };
+        }
+
+        const btnMove = div.querySelector('.btn-move');
+        if (btnMove) {
+          btnMove.onclick = async (e) => {
+            const newDir = await customPrompt("Enter new directory path (e.g. content/semester 1/):", currentPath);
+            if (!newDir || newDir === currentPath) return;
+            const newPath = newDir.replace(/\/$/, '') + '/' + item.name;
+            e.target.textContent = '...';
+            adminAction('rename_file', { path: item.path, newPath: newPath })
+              .then(() => loadTree());
+          };
+        }
+
         const btnRename = div.querySelector('.btn-rename');
         if (btnRename) {
-          btnRename.onclick = (e) => {
+          btnRename.onclick = async (e) => {
             const oldPath = item.path;
-            const newName = prompt("Enter new file name:", item.name);
+            const newName = await customPrompt("Enter new file name:", item.name);
             if (!newName || newName === item.name) return;
             const newPath = currentPath + newName;
             
@@ -566,7 +781,7 @@
           };
         }
 
-        div.querySelector('.btn-del').onclick = (e) => {
+        div.querySelector('.btn-del').onclick = async (e) => {
           const p = e.target.getAttribute('data-path');
           const s = e.target.getAttribute('data-sha');
           const t = e.target.getAttribute('data-type');
@@ -576,7 +791,7 @@
             return;
           }
 
-          if(confirm('Delete ' + p + '?')) {
+          if(await customConfirm('Delete ' + p + '?')) {
             e.target.textContent = '...';
             adminAction('delete', { path: p, sha: s }).then(() => loadTree());
           }
@@ -626,9 +841,9 @@
       }
     };
 
-    document.getElementById('btnBulkDelete').onclick = () => {
+    document.getElementById('btnBulkDelete').onclick = async () => {
       if (selectedFiles.size === 0) return;
-      if (!confirm(`Delete ${selectedFiles.size} selected files?`)) return;
+      if (!(await customConfirm(`Delete ${selectedFiles.size} selected files?`))) return;
       
       const filesToDelete = [];
       selectedFiles.forEach(path => {
@@ -737,8 +952,8 @@
       }
     };
 
-    document.getElementById('btnNewFolder').onclick = () => {
-      const name = prompt("Enter new folder name:");
+    document.getElementById('btnNewFolder').onclick = async () => {
+      const name = await customPrompt("Enter new folder name:");
       if(name && name.trim()) {
         const path = currentPath + name.trim() + '/.gitkeep';
         const base64 = btoa(' '); 
@@ -822,8 +1037,8 @@
         `;
 
         if (card.querySelector('.btn-make-admin')) {
-          card.querySelector('.btn-make-admin').onclick = (e) => {
-            if(confirm(`Make ${email} an Admin?`)) {
+          card.querySelector('.btn-make-admin').onclick = async (e) => {
+            if(await customConfirm(`Make ${email} an Admin?`)) {
               e.target.textContent = '...';
               adminAction('add_admin', { newAdmin: email }).then(() => loadUsers());
             }
@@ -831,8 +1046,8 @@
         }
 
         if (card.querySelector('.btn-revoke')) {
-          card.querySelector('.btn-revoke').onclick = (e) => {
-            if(confirm(`Remove admin privileges for ${email}?`)) {
+          card.querySelector('.btn-revoke').onclick = async (e) => {
+            if(await customConfirm(`Remove admin privileges for ${email}?`)) {
               e.target.textContent = '...';
               adminAction('remove_admin', { targetAdmin: email }).then(() => {
                  window.adminsList = window.adminsList.filter(a => a !== email);
@@ -843,9 +1058,9 @@
         }
 
         if (card.querySelector('.btn-ban')) {
-          card.querySelector('.btn-ban').onclick = (e) => {
+          card.querySelector('.btn-ban').onclick = async (e) => {
             const actionText = isBanned ? 'unban' : 'ban';
-            if(confirm(`Are you sure you want to ${actionText} ${email}?`)) {
+            if(await customConfirm(`Are you sure you want to ${actionText} ${email}?`)) {
               e.target.textContent = '...';
               const newMeta = { ...meta, banned: !isBanned };
               adminAction('ban_user', { userId: u.id, user_metadata: newMeta }).then(() => loadUsers());
@@ -854,8 +1069,8 @@
         }
 
         if (card.querySelector('.btn-del-user')) {
-          card.querySelector('.btn-del-user').onclick = (e) => {
-            if(confirm(`WARNING: This will permanently delete the user ${email} from the database. This action cannot be undone. Proceed?`)) {
+          card.querySelector('.btn-del-user').onclick = async (e) => {
+            if(await customConfirm(`WARNING: This will permanently delete the user ${email} from the database. This action cannot be undone. Proceed?`)) {
               e.target.textContent = '...';
               adminAction('delete_user', { userId: u.id }).then(() => loadUsers());
             }

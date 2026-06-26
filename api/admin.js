@@ -28,27 +28,43 @@ export default async function handler(req, res) {
   const email = userData.email;
   const username = userData.user_metadata?.username;
 
-  // 2. Fetch admins.json from GitHub to check permissions
+  // 2. Fetch admins.json from GitHub to check permissions (with caching)
   const githubToken = process.env.GITHUB_TOKEN;
   const owner = 'alchemist4real';
   const repo = 'MR-CAPSULES';
 
-  const adminsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/admins.json`, {
-    headers: { 'Authorization': `Bearer ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }
-  });
+  let adminsList = [];
+  let adminsSha = null;
 
-  if (!adminsRes.ok) {
-    return res.status(500).json({ error: 'Failed to read admins.json from repository' });
+  // Use global cache if valid
+  const now = Date.now();
+  if (global.cachedAdmins && global.cachedAdminsTime && (now - global.cachedAdminsTime < 5 * 60 * 1000)) {
+    adminsList = global.cachedAdmins;
+    adminsSha = global.cachedAdminsSha;
+  } else {
+    const adminsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/admins.json`, {
+      headers: { 'Authorization': `Bearer ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+
+    if (!adminsRes.ok) {
+      return res.status(500).json({ error: 'Failed to read admins.json from repository' });
+    }
+
+    const adminsData = await adminsRes.json();
+    adminsSha = adminsData.sha;
+    const adminsJsonStr = Buffer.from(adminsData.content, 'base64').toString('utf8');
+    try {
+      adminsList = JSON.parse(adminsJsonStr);
+      // Update cache
+      global.cachedAdmins = adminsList;
+      global.cachedAdminsSha = adminsSha;
+      global.cachedAdminsTime = now;
+    } catch(e) {}
   }
 
-  const adminsData = await adminsRes.json();
-  const adminsJsonStr = Buffer.from(adminsData.content, 'base64').toString('utf8');
-  let adminsList = [];
-  try {
-    adminsList = JSON.parse(adminsJsonStr);
-  } catch(e) {}
-
-  const isSuperAdmin = email === 'muqorroben@gmail.com' || username === 'alchemist4real';
+  const superAdminEmail = process.env.SUPERADMIN_EMAIL || 'muqorroben@gmail.com';
+  const superAdminUsername = process.env.SUPERADMIN_USERNAME || 'alchemist4real';
+  const isSuperAdmin = email === superAdminEmail || username === superAdminUsername;
   const isAdmin = isSuperAdmin || adminsList.includes(email) || adminsList.includes(username);
 
   if (!isAdmin) {
@@ -160,11 +176,13 @@ export default async function handler(req, res) {
         const body = {
           message: `admin: add admin ${newAdmin}`,
           content: Buffer.from(JSON.stringify(adminsList, null, 2)).toString('base64'),
-          sha: adminsData.sha
+          sha: adminsSha
         };
         const resGit = await ghApi('PUT', `/contents/admins.json`, body);
         const data = await resGit.json();
         if (!resGit.ok) throw new Error(data.message || JSON.stringify(data));
+        // Clear cache
+        global.cachedAdminsTime = 0;
         return res.status(200).json({ success: true, admins: adminsList });
       }
       return res.status(200).json({ success: true, message: 'Already an admin', admins: adminsList });
@@ -206,11 +224,13 @@ export default async function handler(req, res) {
         const body = {
           message: `admin: remove admin ${targetAdmin}`,
           content: Buffer.from(JSON.stringify(adminsList, null, 2)).toString('base64'),
-          sha: adminsData.sha
+          sha: adminsSha
         };
         const resGit = await ghApi('PUT', `/contents/admins.json`, body);
         const data = await resGit.json();
         if (!resGit.ok) throw new Error(data.message || JSON.stringify(data));
+        // Clear cache
+        global.cachedAdminsTime = 0;
       }
       return res.status(200).json({ success: true, admins: adminsList });
     }
