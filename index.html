@@ -602,8 +602,9 @@ iframe {
       <form class="auth-form" id="authForm" onsubmit="return false;">
         <input type="email" class="auth-input" id="authEmail" placeholder="EMAIL ADDRESS" required>
         <input type="password" class="auth-input" id="authPassword" placeholder="PASSWORD" required>
-        <button type="submit" class="auth-btn" id="btnSignIn">SIGN IN</button>
+        <button type="submit" class="auth-btn" id="btnSignIn">LOG IN</button>
         <button type="button" class="auth-btn auth-btn-outline" id="btnSignUp">SIGN UP</button>
+        <button type="button" class="btn-text" id="btnForgotPwd" style="font-size: 10px; margin-top: 8px; opacity: 0.7;">FORGOT PASSWORD?</button>
         <div class="auth-msg" id="authMsg"></div>
       </form>
     </div>
@@ -732,6 +733,13 @@ iframe {
             <div style="display:flex; width:100%; gap:8px;">
               <input type="text" id="authUsername" class="auth-input" style="flex:1; padding:6px 10px;" placeholder="YOUR NAME">
               <button id="btnSaveUsername" class="auth-btn auth-btn-outline" style="padding:6px 12px; font-size:11px;">SAVE</button>
+            </div>
+          </div>
+          <div class="stat-item" style="flex-direction:column; align-items:flex-start; gap:8px; margin-top:12px;">
+            <span class="stat-label">CHANGE PASSWORD</span>
+            <div style="display:flex; width:100%; gap:8px;">
+              <input type="password" id="settingsNewPassword" class="auth-input" style="flex:1; padding:6px 10px;" placeholder="NEW PASSWORD">
+              <button id="btnUpdatePassword" class="auth-btn auth-btn-outline" style="padding:6px 12px; font-size:11px; white-space:nowrap;">UPDATE</button>
             </div>
           </div>
           <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px;">
@@ -1180,6 +1188,7 @@ try {
     const authPassword = document.getElementById('authPassword');
     const btnSignIn = document.getElementById('btnSignIn');
     const btnSignUp = document.getElementById('btnSignUp');
+    const btnForgotPwd = document.getElementById('btnForgotPwd');
     const authMsg = document.getElementById('authMsg');
 
     let isSignupAllowed = true;
@@ -1278,6 +1287,16 @@ try {
       } else if (event === 'SIGNED_OUT') {
         authOverlay.classList.remove('hidden');
         if(isTracking) window.location.reload();
+      } else if (event === 'PASSWORD_RECOVERY') {
+        const newPassword = prompt("Please enter your new password:");
+        if (newPassword && newPassword.trim() !== '') {
+          supabase.auth.updateUser({ password: newPassword }).then(({ error }) => {
+            if (error) alert("Error updating password: " + error.message);
+            else alert("Password updated successfully!");
+          });
+        } else {
+          alert("Password update cancelled.");
+        }
       }
     });
 
@@ -1300,6 +1319,26 @@ try {
       }
     });
 
+    const settingsNewPassword = document.getElementById('settingsNewPassword');
+    const btnUpdatePassword = document.getElementById('btnUpdatePassword');
+    if (btnUpdatePassword && settingsNewPassword) {
+      btnUpdatePassword.addEventListener('click', async () => {
+        const val = settingsNewPassword.value;
+        if (!val) return;
+        btnUpdatePassword.textContent = '...';
+        const { error } = await supabase.auth.updateUser({ password: val });
+        if (!error) {
+          settingsNewPassword.value = '';
+          btnUpdatePassword.textContent = 'UPDATED';
+          setTimeout(() => btnUpdatePassword.textContent = 'UPDATE', 2000);
+        } else {
+          btnUpdatePassword.textContent = 'ERROR';
+          console.error(error);
+          setTimeout(() => btnUpdatePassword.textContent = 'UPDATE', 2000);
+        }
+      });
+    }
+
     function isValidEmail(email) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
@@ -1315,7 +1354,7 @@ try {
         email: authEmail.value,
         password: authPassword.value,
       });
-      btnSignIn.textContent = 'SIGN IN';
+      btnSignIn.textContent = 'LOG IN';
       if (error) showAuthMsg(error.message, true);
     });
 
@@ -1342,6 +1381,24 @@ try {
         } else {
           showAuthMsg("Success! Please check your email for a confirmation link.", false);
         }
+      }
+    });
+
+    btnForgotPwd.addEventListener('click', async () => {
+      if (!authEmail.value) {
+        showAuthMsg("PLEASE ENTER YOUR EMAIL ADDRESS", true);
+        return;
+      }
+      if (!isValidEmail(authEmail.value)) {
+        showAuthMsg("INVALID EMAIL FORMAT", true);
+        return;
+      }
+      showAuthMsg("Sending reset link...", false);
+      const { error } = await supabase.auth.resetPasswordForEmail(authEmail.value);
+      if (error) {
+        showAuthMsg(error.message, true);
+      } else {
+        showAuthMsg("Password reset link sent to your email.", false);
       }
     });
     
