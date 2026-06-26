@@ -141,6 +141,26 @@
       padding: 16px 24px; border-top: 1px solid var(--border-light); background: var(--bg-card);
       display: none;
     }
+    
+    /* Toggle Switch */
+    .switch-label {
+      display: flex; align-items: center; gap: 12px; cursor: pointer;
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600; text-transform: uppercase;
+      color: var(--text-main);
+    }
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--bg-hover); transition: .2s; border: 1px solid var(--border-light);
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+      background-color: var(--text-main); transition: .2s;
+    }
+    input:checked + .slider { background-color: var(--accent); border-color: var(--accent); }
+    input:checked + .slider:before { transform: translateX(20px); background-color: #000; }
+    
     .auth-input { background: #000; border: 1px solid var(--border-light); color: #fff; padding: 8px 12px; border-radius: 0; outline: none; }
     .auth-input:focus { border-color: var(--accent); }
 
@@ -638,23 +658,28 @@
             
             try {
               const cfgRes = await fetch('https://api.github.com/repos/alchemist4real/MR-CAPSULES/contents/config.json');
+              const toggle = document.getElementById('toggleSignup');
+              
               if(cfgRes.ok) {
                 const cfgData = await cfgRes.json();
                 window.configSha = cfgData.sha;
                 const configObj = JSON.parse(decodeURIComponent(escape(atob(cfgData.content))));
-                const toggle = document.getElementById('toggleSignup');
                 toggle.checked = configObj.allowSignup !== false;
-                
-                toggle.onchange = async (e) => {
-                  const isAllowed = e.target.checked;
-                  const newConfig = { allowSignup: isAllowed };
-                  const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(newConfig, null, 2))));
-                  await adminAction('upload', { path: 'config.json', contentBase64: base64, sha: window.configSha });
-                  // Re-fetch to get new SHA
-                  const updatedRes = await fetch('https://api.github.com/repos/alchemist4real/MR-CAPSULES/contents/config.json?t=' + Date.now());
-                  if(updatedRes.ok) window.configSha = (await updatedRes.json()).sha;
-                };
+              } else {
+                window.configSha = null;
+                toggle.checked = true; // Default true if config doesn't exist
               }
+              
+              toggle.onchange = async (e) => {
+                const isAllowed = e.target.checked;
+                const newConfig = { allowSignup: isAllowed };
+                const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(newConfig, null, 2))));
+                await adminAction('upload', { path: 'config.json', contentBase64: base64, sha: window.configSha });
+                
+                // Re-fetch to get new SHA
+                const updatedRes = await fetch('https://api.github.com/repos/alchemist4real/MR-CAPSULES/contents/config.json?t=' + Date.now());
+                if(updatedRes.ok) window.configSha = (await updatedRes.json()).sha;
+              };
             } catch(e) { console.error("Config fetch error:", e); }
           }
           loadTree();
