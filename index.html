@@ -405,6 +405,22 @@ html,body{
 .stat-val { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; }
 .stat-divider { height: 1px; background: rgba(250,250,250,0.08); width: 100%; margin: 4px 0; }
 
+/* ══ TOGGLE SWITCH ══ */
+.toggle-switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-switch .slider {
+  position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: transparent; border: 1.5px solid var(--border-heavy);
+  border-radius: 22px; transition: .3s;
+}
+.toggle-switch .slider:before {
+  position: absolute; content: ""; height: 12px; width: 12px;
+  left: 3px; bottom: 3px; background-color: var(--border-heavy);
+  border-radius: 50%; transition: .3s;
+}
+.toggle-switch input:checked + .slider { background-color: var(--text-main); border-color: var(--text-main); }
+.toggle-switch input:checked + .slider:before { transform: translateX(19px); background-color: var(--bg-main); }
+
 /* ══ AUTH OVERLAY ══ */
 .auth-overlay {
   position: fixed; inset: 0; z-index: 500;
@@ -679,12 +695,12 @@ iframe {
             </div>
           </div>
           <div class="stat-divider" style="margin: 8px 0;"></div>
-          <div class="stat-item" style="flex-direction:column; align-items:flex-start; gap:8px;">
-            <span class="stat-label">LOW PERFORMANCE MODE (DISABLE COVERS)</span>
-            <div style="display:flex; width:100%; gap:4px;" id="perfToggles">
-              <button class="auth-btn auth-btn-outline perf-btn active" data-perf-val="off" style="flex:1; padding:6px; font-size:10px;">OFF</button>
-              <button class="auth-btn auth-btn-outline perf-btn" data-perf-val="on" style="flex:1; padding:6px; font-size:10px;">ON</button>
-            </div>
+          <div class="stat-item" style="flex-direction:row; align-items:center; justify-content:space-between; width:100%;">
+            <span class="stat-label">LOW PERF MODE<br><span style="opacity:0.5; font-size:9px;">DISABLE COVERS</span></span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="perfToggleCb">
+              <span class="slider"></span>
+            </label>
           </div>
         </div>
       </div>
@@ -780,7 +796,7 @@ themeToggles.forEach(btn => {
 });
 
 /* ══ PERFORMANCE ENGINE ══ */
-const perfToggles = document.querySelectorAll('.perf-btn');
+const perfToggleCb = document.getElementById('perfToggleCb');
 let isLowPerfMode = false;
 try {
   isLowPerfMode = localStorage.getItem('mr_low_perf') === 'on';
@@ -788,18 +804,16 @@ try {
 
 function applyPerfMode(val, skipRender) {
   isLowPerfMode = (val === 'on');
-  perfToggles.forEach(btn => {
-    btn.classList.toggle('active', btn.getAttribute('data-perf-val') === val);
-  });
-  if (!skipRender && rawData) {
-    applyData(rawData); // re-render catalog
+  if (perfToggleCb) perfToggleCb.checked = isLowPerfMode;
+  if (!skipRender && catalog.length > 0) {
+    loadCatalog(catalog, cur); // re-render CURRENT catalog to apply covers
   }
 }
 applyPerfMode(isLowPerfMode ? 'on' : 'off', true);
 
-perfToggles.forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const val = btn.getAttribute('data-perf-val');
+if (perfToggleCb) {
+  perfToggleCb.addEventListener('change', async (e) => {
+    const val = e.target.checked ? 'on' : 'off';
     try {
       localStorage.setItem('mr_low_perf', val);
     } catch(e) {}
@@ -814,7 +828,7 @@ perfToggles.forEach(btn => {
       }
     }
   });
-});
+}
 
 let rawData = null;
 let navHistory = [];
