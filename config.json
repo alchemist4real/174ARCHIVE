@@ -1,5 +1,7 @@
 {
   "allowSignup": true,
   "maintenanceMode": false,
-  "bannedDevices": []
+  "bannedDevices": [
+    "dev_6d458rk3nmqw0hp58"
+  ]
 }
