@@ -199,7 +199,21 @@ export default async function handler(req, res) {
       });
       if (!sbRes.ok) throw new Error(await sbRes.text());
       const data = await sbRes.json();
-      return res.status(200).json({ success: true, users: data.users || [] });
+
+      let globalStats = null;
+      try {
+        const statsRes = await fetch(`${supabaseUrl}/rest/v1/global_stats?id=eq.1&select=total_uptime`, {
+           headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+        });
+        if (statsRes.ok) {
+           const statsData = await statsRes.json();
+           if (statsData && statsData.length > 0) {
+              globalStats = statsData[0];
+           }
+        }
+      } catch(e) {}
+
+      return res.status(200).json({ success: true, users: data.users || [], globalStats });
     }
 
     if (action === 'ban_user') {

@@ -1256,8 +1256,18 @@ try {
 
     function syncDeviceId(session) {
       if(session && session.user && session.user.user_metadata) {
-        if(session.user.user_metadata.deviceId !== getDeviceId()) {
-          supabase.auth.updateUser({ data: { deviceId: getDeviceId() } }).catch(e => console.log('Device sync error', e));
+        let meta = session.user.user_metadata;
+        let devices = Array.isArray(meta.devices) ? meta.devices : [];
+        
+        // Migrate old string deviceId
+        if (typeof meta.deviceId === 'string' && !devices.some(d => d.id === meta.deviceId)) {
+           devices.push({ id: meta.deviceId, added: new Date().toISOString() });
+        }
+        
+        const currentDev = getDeviceId();
+        if (!devices.some(d => d.id === currentDev)) {
+           devices.push({ id: currentDev, added: new Date().toISOString() });
+           supabase.auth.updateUser({ data: { devices, deviceId: null } }).catch(e => console.log('Device sync error', e));
         }
       }
     }

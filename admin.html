@@ -1448,19 +1448,42 @@
         const meta = u.user_metadata || {};
         const username = meta.username || '-';
         const isBanned = meta.banned === true;
-        const deviceId = meta.deviceId || '';
-        const isDeviceBanned = deviceId && bannedDevs.includes(deviceId);
+        
+        let devices = Array.isArray(meta.devices) ? meta.devices : [];
+        if (typeof meta.deviceId === 'string' && !devices.some(d => d.id === meta.deviceId)) {
+           devices.push({ id: meta.deviceId, added: u.created_at });
+        }
         
         const isAdmin = window.adminsList && (window.adminsList.includes(email) || window.adminsList.includes(username));
 
         const card = document.createElement('div');
         card.className = 'user-card';
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
         
         let badgesHtml = '';
         if (isAdmin) badgesHtml += '<span class="badge badge-admin">ADMIN</span>';
         if (isBanned) badgesHtml += '<span class="badge badge-banned">BANNED</span>';
-        if (deviceId) badgesHtml += `<span class="badge" style="background:#444;">DEV: ${deviceId.substr(0,8)}</span>`;
-        if (isDeviceBanned) badgesHtml += '<span class="badge badge-banned" style="background:#FF3333;">DEV BLOCKED</span>';
+
+        let devicesHtml = '';
+        if (devices.length > 0) {
+           devicesHtml = `<div style="margin-top: 15px; font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border-light); padding-top: 10px;">
+             <div style="font-weight: 600; margin-bottom: 5px;">Known Devices</div>
+             ${devices.map(d => {
+                const isDeviceBanned = bannedDevs.includes(d.id);
+                return \`
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 4px 0;">
+                  <span>\${d.id.substr(0,12)}...</span>
+                  <button class="btn-card \${isDeviceBanned ? 'primary' : 'danger'} btn-block-dev" style="padding: 2px 8px; font-size: 11px;" data-dev="\${d.id}" data-banned="\${isDeviceBanned}">
+                    \${isDeviceBanned ? 'Unban Dev' : 'Block Dev'}
+                  </button>
+                </div>
+                \`;
+             }).join('')}
+           </div>`;
+        } else {
+           devicesHtml = `<div style="margin-top: 15px; font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border-light); padding-top: 10px;">No known devices.</div>`;
+        }
 
         card.innerHTML = `
           <div class="user-card-header">
@@ -1480,12 +1503,10 @@
               <button class="btn-card ${isBanned ? 'primary' : 'danger'} btn-ban" data-id="${u.id}" data-banned="${isBanned}">
                 ${isBanned ? 'Unban' : 'Ban'}
               </button>
-              <button class="btn-card ${isDeviceBanned ? 'primary' : 'danger'} btn-block-dev" data-dev="${deviceId}" data-banned="${isDeviceBanned}">
-                ${isDeviceBanned ? 'Unban Dev' : 'Block Dev'}
-              </button>
               <button class="btn-card danger btn-del-user" data-id="${u.id}">Delete</button>
             ` : ''}
           </div>
+          ${devicesHtml}
         `;
 
         if (card.querySelector('.btn-make-admin')) {
@@ -1529,11 +1550,12 @@
           };
         }
 
-        if (card.querySelector('.btn-block-dev')) {
-          card.querySelector('.btn-block-dev').onclick = async (e) => {
+        const devBtns = card.querySelectorAll('.btn-block-dev');
+        devBtns.forEach(btn => {
+          btn.onclick = async (e) => {
              const devId = e.target.getAttribute('data-dev');
              const currentlyBanned = e.target.getAttribute('data-banned') === 'true';
-             if(!devId) { alert('No device ID known for this user.'); return; }
+             if(!devId) return;
              
              if(!await customConfirm(`Are you sure you want to ${currentlyBanned ? 'unban' : 'block'} this device?`)) return;
              
@@ -1563,7 +1585,7 @@
                 e.target.textContent = 'Error';
              }
           };
-        }
+        });
 
         userBrowser.appendChild(card);
       });
