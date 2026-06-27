@@ -878,14 +878,13 @@
                 }
               }
 
-              const cfgRes = await fetch('https://api.github.com/repos/alchemist4real/MR-CAPSULES/contents/config.json');
+              const cfgRes = await adminAction('get_config');
               const toggle = document.getElementById('toggleSignup');
               const toggleMaint = document.getElementById('toggleMaintenance');
               
-              if(cfgRes.ok) {
-                const cfgData = await cfgRes.json();
-                window.configSha = cfgData.sha;
-                const configObj = JSON.parse(decodeURIComponent(escape(atob(cfgData.content))));
+              if(cfgRes && cfgRes.success) {
+                window.configSha = cfgRes.sha;
+                const configObj = cfgRes.config;
                 toggle.checked = configObj.allowSignup !== false;
                 toggleMaint.checked = configObj.maintenanceMode === true;
               } else {
@@ -897,11 +896,20 @@
               const updateConfig = async () => {
                 const isAllowed = toggle.checked;
                 const isMaint = toggleMaint.checked;
-                const newConfig = { allowSignup: isAllowed, maintenanceMode: isMaint };
+                
+                // Fetch latest to avoid wiping bannedDevices
+                let existingConfig = {};
+                try {
+                  const currCfg = await adminAction('get_config');
+                  if (currCfg && currCfg.success) existingConfig = currCfg.config;
+                } catch(e) {}
+                
+                const newConfig = { ...existingConfig, allowSignup: isAllowed, maintenanceMode: isMaint };
                 const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(newConfig, null, 2))));
                 await adminAction('upload', { path: 'config.json', contentBase64: base64, sha: window.configSha });
-                const updatedRes = await fetch('https://api.github.com/repos/alchemist4real/MR-CAPSULES/contents/config.json?t=' + Date.now());
-                if(updatedRes.ok) window.configSha = (await updatedRes.json()).sha;
+                
+                const updatedRes = await adminAction('get_config');
+                if(updatedRes && updatedRes.success) window.configSha = updatedRes.sha;
               };
               
               toggle.onchange = updateConfig;
@@ -1435,9 +1443,10 @@
       try {
         let bannedDevs = [];
         try {
-           const cfgRes = await fetch('https://raw.githubusercontent.com/alchemist4real/MR-CAPSULES/main/config.json?t=' + Date.now());
-           const cfgData = await cfgRes.json();
-           bannedDevs = cfgData.bannedDevices || [];
+           const cfgData = await adminAction('get_config');
+           if (cfgData && cfgData.success && cfgData.config) {
+             bannedDevs = cfgData.config.bannedDevices || [];
+           }
         } catch(e) {}
 
         const res = await fetch('/api/admin', {
@@ -1619,9 +1628,8 @@
              
              e.target.textContent = '...';
              try {
-                const cfgRes = await fetch('https://api.github.com/repos/alchemist4real/MR-CAPSULES/contents/config.json?t=' + Date.now());
-                const cfgData = await cfgRes.json();
-                const configObj = JSON.parse(decodeURIComponent(escape(atob(cfgData.content))));
+                const cfgData = await adminAction('get_config');
+                const configObj = cfgData.config || {};
                 let arr = configObj.bannedDevices || [];
                 
                 if (currentlyBanned) {

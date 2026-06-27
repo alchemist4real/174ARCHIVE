@@ -1273,7 +1273,7 @@ try {
     }
 
     let isSignupAllowed = true;
-    fetch('https://raw.githubusercontent.com/alchemist4real/MR-CAPSULES/main/config.json?t=' + Date.now())
+    fetch('/api/config')
       .then(r => r.json())
       .then(config => {
         const dId = getDeviceId();

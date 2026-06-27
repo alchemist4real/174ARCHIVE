@@ -143,6 +143,16 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
+    if (action === 'get_config') {
+      const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/config.json?t=${Date.now()}`, {
+        headers: { 'Authorization': `Bearer ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (!getRes.ok) throw new Error("Config file not found");
+      const fileData = await getRes.json();
+      const configObj = JSON.parse(Buffer.from(fileData.content, 'base64').toString('utf8'));
+      return res.status(200).json({ success: true, sha: fileData.sha, config: configObj });
+    }
+
     if (action === 'rename_file') {
       const { newPath } = req.body;
       if (!newPath || !path) throw new Error("Missing path or newPath");
