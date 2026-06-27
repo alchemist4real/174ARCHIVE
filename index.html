@@ -1801,6 +1801,7 @@ try {
   /* ══ GUIDED TOUR ENGINE ══ */
   let guideSteps = [];
   let currentGuideStep = 0;
+  let originalIframeState = false;
   
   function skipGuide() {
     document.getElementById('interactionModeModal').classList.remove('active');
@@ -1808,6 +1809,7 @@ try {
   }
   
   function startGuide(mode) {
+    originalIframeState = document.getElementById('iframeViewer').classList.contains('active');
     document.getElementById('interactionModeModal').classList.remove('active');
     
     guideSteps = [
@@ -1824,12 +1826,18 @@ try {
       {
         target: '#btnPlay',
         title: 'Dive In',
-        text: mode === 'touch' ? 'Tap a cover or tap Play to dive into the selected folder.' : 'Press Enter or click Play to dive into the selected folder.'
+        text: mode === 'touch' ? 'You can directly tap on any cover, or tap the Play button below, to open a folder or file.' : 'You can directly click on any cover, or press the Play button below, to open a folder or file.'
       },
       {
         target: '#btnTopBack',
         title: 'Navigation',
         text: 'Use this back button to easily navigate back up your folder hierarchy when deep inside.'
+      },
+      {
+        target: '.iframe-header',
+        title: 'Document Reader',
+        text: 'When reading a file, use this top bar to navigate back, jump to the next file, or go fullscreen.',
+        action: 'show-iframe'
       },
       {
         target: '#btnSettings',
@@ -1862,6 +1870,12 @@ try {
       document.getElementById('btnGuideNext').textContent = 'FINISH';
     } else {
       document.getElementById('btnGuideNext').textContent = 'NEXT STEP';
+    }
+    
+    if (step.action === 'show-iframe') {
+      document.getElementById('iframeViewer').classList.add('active');
+    } else {
+      document.getElementById('iframeViewer').classList.remove('active');
     }
     
     if (targetEl) {
@@ -1911,6 +1925,13 @@ try {
   function endGuide() {
     document.getElementById('guideOverlay').classList.remove('active');
     document.getElementById('guideTooltip').classList.remove('visible');
+    
+    if (originalIframeState) {
+      document.getElementById('iframeViewer').classList.add('active');
+    } else {
+      document.getElementById('iframeViewer').classList.remove('active');
+    }
+    
     updateBackButton(); 
     document.getElementById('settingsModal').classList.add('active');
   }
