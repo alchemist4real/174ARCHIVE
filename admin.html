@@ -387,23 +387,28 @@
 
     /* Mobile Responsiveness (Android Mode) */
     @media (max-width: 768px) {
-      .bottom-dock .brand { display: flex; margin-right: auto; }
-      .bottom-dock .tabs { position: static; transform: none; display: flex; justify-content: flex-end; padding: 0; flex: 1; gap: 8px; }
-      .bottom-dock .tab { font-size: 11px; padding: 8px 12px; }
+      .bottom-dock .brand img, .bottom-dock .brand > div { display: none !important; }
+      .bottom-dock .brand { display: flex; margin-right: auto; gap: 0 !important; width: auto; }
+      .bottom-dock .tabs { position: static; transform: none; display: flex; justify-content: flex-end; padding: 0; flex: 1; gap: 4px; }
+      .bottom-dock .tab { font-size: 10px; padding: 8px; gap: 4px !important; }
       .bottom-dock .user-info { display: none; }
-      .bottom-dock { padding: 0 16px; justify-content: flex-start; }
+      .bottom-dock { padding: 0 8px; justify-content: flex-start; }
+      
       .toolbar { flex-wrap: wrap; padding: 12px 16px; gap: 8px; }
-      .toolbar > div { width: 100%; justify-content: space-between; }
-      .toolbar .auth-input { flex: 1; }
-      .toolbar .btn { flex: 1; justify-content: center; }
-      .file-actions { flex-wrap: wrap !important; flex-direction: row !important; justify-content: flex-start !important; opacity: 1 !important; position: static !important; display: flex !important; gap: 4px; background: transparent !important; padding: 0 !important; border: none !important; margin-top: 8px; }
+      .toolbar > div { width: 100%; justify-content: space-between; display: flex; gap: 8px; }
+      .toolbar .auth-input { flex: 1; min-width: 0; }
+      .toolbar .btn { flex: 1; justify-content: center; padding: 8px; font-size: 12px; }
+      #btnToggleView span, #btnRefresh span { display: none; }
+      
+      .file-actions { opacity: 1 !important; display: flex !important; position: static !important; background: transparent !important; border: none !important; margin-left: auto; }
       .file-browser.grid-mode .file-actions .btn { width: auto !important; padding: 6px 12px !important; }
       .file-browser.grid-mode { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); padding: 16px; gap: 12px; }
+      
       #lightboxText { width: 95%; height: 95%; font-size: 12px; padding: 16px; }
       .navbar { padding: 0 16px; }
-      .file-item { flex-direction: column; align-items: flex-start; padding: 16px; }
-      .file-icon { margin-bottom: 8px; }
-      .file-name { width: 100%; margin-bottom: 8px; }
+      .file-item { padding: 12px 16px; gap: 12px; }
+      .file-icon { margin-right: 0; }
+      .file-name { font-size: 13px; }
       .path-bar { overflow-x: auto; white-space: nowrap; padding: 12px 16px; }
       .user-grid { grid-template-columns: 1fr; padding: 16px; gap: 12px; }
       .user-card { padding: 12px; }
@@ -492,11 +497,11 @@
             </button>
             <button id="btnToggleView" class="btn" style="display:flex; align-items:center; gap:6px;">
               <svg id="iconList" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-              Toggle View
+              <span>Toggle</span>
             </button>
             <button id="btnRefresh" class="btn" style="display:flex; align-items:center; gap:6px;">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-              Refresh
+              <span>Refresh</span>
             </button>
           </div>
         </div>
