@@ -605,6 +605,39 @@ iframe {
 <!-- Global Toast Container -->
 <div id="toastContainer" style="position:fixed; top:24px; left:50%; transform:translateX(-50%); z-index:9999999; display:flex; flex-direction:column; gap:12px; pointer-events:none;"></div>
 
+/* Guide Overlay */
+#guideOverlay {
+  position: fixed; inset: 0; background: rgba(10,10,10,0.8); z-index: 99990;
+  display: none; transition: opacity 0.3s ease;
+}
+#guideOverlay.active { display: block; }
+
+.guide-highlight {
+  position: absolute; border: 2px solid var(--text-main); box-shadow: 0 0 20px var(--border-medium);
+  border-radius: 4px; pointer-events: none; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  background: transparent;
+}
+
+.guide-tooltip {
+  position: absolute; width: 300px; max-width: 90vw; background: var(--bg-card);
+  border: 1px solid var(--text-main); padding: 16px; border-radius: 4px;
+  color: var(--text-main); font-family: var(--font-mono); font-size: 13px; line-height: 1.5;
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); opacity: 0; transform: translateY(10px);
+  pointer-events: auto;
+}
+.guide-tooltip.visible { opacity: 1; transform: translateY(0); }
+.guide-header { font-family: var(--font-sans); font-size: 18px; font-weight: bold; margin-bottom: 8px; color: var(--text-main); }
+.guide-body { margin-bottom: 16px; color: var(--text-muted); }
+.guide-footer { display: flex; justify-content: space-between; align-items: center; }
+.guide-step-count { font-size: 11px; opacity: 0.5; letter-spacing: 0.1em; }
+
+/* Intercept Modal */
+#interactionModeModal {
+  position: fixed; inset: 0; background: rgba(10,10,10,0.95); z-index: 99999;
+  display: none; align-items: center; justify-content: center; flex-direction: column;
+}
+#interactionModeModal.active { display: flex; }
+
 <!-- AUTH OVERLAY -->
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-container">
@@ -1404,6 +1437,9 @@ try {
           syncDeviceId(session);
         }
         authOverlay.classList.add('hidden');
+        if (!currentUsername) {
+          document.getElementById('interactionModeModal').classList.add('active');
+        }
         startTracking();
       } else if (event === 'SIGNED_OUT') {
         authOverlay.classList.remove('hidden');
@@ -1721,6 +1757,140 @@ try {
   }
   
   initAdminCheck();
+</script>
+<!-- Interaction Mode Intercept -->
+<div id="interactionModeModal">
+  <div style="background:var(--bg-card); border:1px solid var(--text-main); padding:32px; max-width:400px; width:90%; text-align:center;">
+    <div style="font-family:var(--font-sans); font-size:24px; color:var(--text-main); margin-bottom:16px;">WELCOME TO MR CAPSULES</div>
+    <div style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted); margin-bottom:24px; line-height:1.5;">To personalize your guided tour, please select your primary interaction mode:</div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <button class="auth-btn" style="background:var(--text-main); color:var(--bg-main);" onclick="startGuide('keyboard')">[ KEYBOARD & MOUSE ]</button>
+      <button class="auth-btn" style="background:transparent; color:var(--text-main); border:1px solid var(--text-main);" onclick="startGuide('touch')">[ TOUCHSCREEN ]</button>
+    </div>
+    <button class="btn-text" style="margin: 24px auto 0 auto; opacity: 0.5;" onclick="skipGuide()">SKIP TOUR</button>
+  </div>
+</div>
+
+<!-- Guide Overlay -->
+<div id="guideOverlay">
+  <div class="guide-highlight" id="guideHighlight"></div>
+  <div class="guide-tooltip" id="guideTooltip">
+    <div class="guide-header" id="guideHeader"></div>
+    <div class="guide-body" id="guideBody"></div>
+    <div class="guide-footer">
+      <div class="guide-step-count" id="guideStepCount"></div>
+      <button class="auth-btn" style="padding:6px 12px; font-size:11px;" id="btnGuideNext">NEXT STEP</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ══ GUIDED TOUR ENGINE ══ */
+  let guideSteps = [];
+  let currentGuideStep = 0;
+  
+  function skipGuide() {
+    document.getElementById('interactionModeModal').classList.remove('active');
+    document.getElementById('settingsModal').classList.add('active'); // prompt for username
+  }
+  
+  function startGuide(mode) {
+    document.getElementById('interactionModeModal').classList.remove('active');
+    
+    guideSteps = [
+      {
+        target: '#cfWrap',
+        title: 'The Coverflow',
+        text: mode === 'touch' ? 'Swipe left and right to browse your study modules.' : 'Use your Left/Right arrow keys or click and drag to browse your study modules.'
+      },
+      {
+        target: '#btnToggleMode',
+        title: 'View Toggle',
+        text: 'Switch between the immersive 3D Coverflow and a fast flat Grid View.'
+      },
+      {
+        target: '#btnPlay',
+        title: 'Dive In',
+        text: mode === 'touch' ? 'Tap a cover or tap Play to dive into the selected folder.' : 'Press Enter or click Play to dive into the selected folder.'
+      },
+      {
+        target: '#btnTopBack',
+        title: 'Navigation',
+        text: 'Use this back button to easily navigate back up your folder hierarchy when deep inside.'
+      },
+      {
+        target: '#btnSettings',
+        title: 'Settings & Account',
+        text: 'Manage your themes, network status, and account here. Let\\'s open settings now so you can set your Username!'
+      }
+    ];
+    
+    currentGuideStep = 0;
+    document.getElementById('guideOverlay').classList.add('active');
+    renderGuideStep();
+  }
+  
+  function renderGuideStep() {
+    if (currentGuideStep >= guideSteps.length) {
+      endGuide();
+      return;
+    }
+    
+    const step = guideSteps[currentGuideStep];
+    const targetEl = document.querySelector(step.target);
+    const hl = document.getElementById('guideHighlight');
+    const tooltip = document.getElementById('guideTooltip');
+    
+    document.getElementById('guideHeader').textContent = step.title;
+    document.getElementById('guideBody').textContent = step.text;
+    document.getElementById('guideStepCount').textContent = \`STEP \${currentGuideStep + 1} OF \${guideSteps.length}\`;
+    
+    if (currentGuideStep === guideSteps.length - 1) {
+      document.getElementById('btnGuideNext').textContent = 'FINISH';
+    } else {
+      document.getElementById('btnGuideNext').textContent = 'NEXT STEP';
+    }
+    
+    if (targetEl) {
+      if (step.target === '#btnTopBack') {
+        targetEl.style.display = 'flex'; 
+      }
+      
+      const rect = targetEl.getBoundingClientRect();
+      const pad = 8;
+      hl.style.left = (rect.left - pad) + 'px';
+      hl.style.top = (rect.top - pad) + 'px';
+      hl.style.width = (rect.width + pad*2) + 'px';
+      hl.style.height = (rect.height + pad*2) + 'px';
+      
+      tooltip.style.left = Math.max(10, Math.min(rect.left, window.innerWidth - 320)) + 'px';
+      
+      if (rect.top > window.innerHeight / 2) {
+        tooltip.style.top = (rect.top - 180) + 'px';
+      } else {
+        tooltip.style.top = (rect.bottom + 20) + 'px';
+      }
+      
+      tooltip.classList.add('visible');
+    } else {
+      hl.style.width = '0px';
+      tooltip.style.left = '50%';
+      tooltip.style.top = '50%';
+      tooltip.style.transform = 'translate(-50%, -50%)';
+    }
+  }
+  
+  document.getElementById('btnGuideNext').addEventListener('click', () => {
+    currentGuideStep++;
+    renderGuideStep();
+  });
+  
+  function endGuide() {
+    document.getElementById('guideOverlay').classList.remove('active');
+    document.getElementById('guideTooltip').classList.remove('visible');
+    updateBackButton(); 
+    document.getElementById('settingsModal').classList.add('active');
+  }
 </script>
 </body>
 </html>
