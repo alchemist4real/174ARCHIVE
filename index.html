@@ -1409,6 +1409,9 @@ try {
         }
         syncDeviceId(session);
         authOverlay.classList.add('hidden');
+        if (!currentUsername) {
+          document.getElementById('interactionModeModal').classList.add('active');
+        }
       }
     });
     
