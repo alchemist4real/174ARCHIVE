@@ -714,6 +714,8 @@
     let selectedFiles = new Set();
 
     window.hybridLogs = [];
+    try { window.hybridLogs = JSON.parse(localStorage.getItem('mrCapsules_hybridLogs') || '[]'); } catch(e) {}
+    
     window.renderHybridLogs = function() {
       var logList = document.getElementById('activityLogList');
       if (!logList) return;
@@ -749,7 +751,12 @@
     
     window.addHybridLog = function(log) {
        const exists = window.hybridLogs.find(l => l.id === log.id);
-       if (!exists) window.hybridLogs.push(log);
+       if (!exists) {
+          window.hybridLogs.push(log);
+          window.hybridLogs.sort(function(a, b) { return b.time - a.time; });
+          if (window.hybridLogs.length > 200) window.hybridLogs = window.hybridLogs.slice(0, 200);
+          try { localStorage.setItem('mrCapsules_hybridLogs', JSON.stringify(window.hybridLogs)); } catch(e) {}
+       }
     };
 
     const authOverlay = document.getElementById('authOverlay');
@@ -887,6 +894,7 @@
                   });
                 }).on('presence', { event: 'join' }, ({ key, newPresences }) => {
                   newPresences.forEach(function(p) {
+                    if (p.user === 'admin') return;
                     var name = (p.email || p.user || 'Unknown');
                     window.addHybridLog({
                        id: 'online_' + name + '_' + Date.now(),
@@ -898,6 +906,7 @@
                   window.renderHybridLogs();
                 }).on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
                   leftPresences.forEach(function(p) {
+                    if (p.user === 'admin') return;
                     var name = (p.email || p.user || 'Unknown');
                     window.addHybridLog({
                        id: 'offline_' + name + '_' + Date.now(),
@@ -908,9 +917,10 @@
                   });
                   window.renderHybridLogs();
                 }).subscribe(async (status) => {
-                  if (status === 'SUBSCRIBED') {
-                     await window.sessionRoom.track({ user: 'admin', joined_at: new Date().toISOString() });
-                  }
+                   if (status === 'SUBSCRIBED') {
+                      await window.sessionRoom.track({ user: 'admin', joined_at: new Date().toISOString() });
+                      window.renderHybridLogs();
+                   }
                 });
                 
                 const btnSendAnn = document.getElementById('btnSendAnnouncement');
