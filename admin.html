@@ -540,9 +540,9 @@
 
           <!-- Activity Logs Column -->
           <div style="flex:2; min-width:400px; background:var(--bg-card); border:1px solid var(--border-light); display:flex; flex-direction:column;">
-            <div style="padding:16px 24px; border-bottom:1px solid var(--border-light); font-weight:600; font-family:var(--font-mono);">Recent Online Activity</div>
+            <div style="padding:16px 24px; border-bottom:1px solid var(--border-light); font-weight:600; font-family:var(--font-mono);">Hybrid Activity Log (Logins & Live)</div>
             <div id="activityLogList" style="flex:1; overflow-y:auto; padding:0; list-style:none;">
-               <div id="activityPlaceholder" style="padding:24px; color:var(--text-muted); text-align:center;">Waiting for real-time activity...</div>
+               <div id="activityPlaceholder" style="padding:24px; color:var(--text-muted); text-align:center;">Waiting for activity...</div>
             </div>
           </div>
         </div>
@@ -713,6 +713,45 @@
     let isGridMode = false;
     let selectedFiles = new Set();
 
+    window.hybridLogs = [];
+    window.renderHybridLogs = function() {
+      var logList = document.getElementById('activityLogList');
+      if (!logList) return;
+      logList.innerHTML = '';
+      
+      var sorted = window.hybridLogs.slice().sort(function(a, b) { return b.time - a.time; });
+      
+      sorted.slice(0, 100).forEach(function(log) {
+        var item = document.createElement('div');
+        item.style.padding = '12px 24px';
+        item.style.borderBottom = '1px solid var(--border-light)';
+        item.style.animation = 'fadeIn 0.3s ease';
+        
+        var timeStr = new Date(log.time).toLocaleString();
+        if (log.type === 'login') {
+          item.innerHTML = '<div style="font-size:12px; color:var(--text-muted);">' + timeStr + ' - [SYSTEM: LOGIN]</div>' +
+            '<div style="font-weight:600;">' + log.user + '</div>' +
+            '<div style="font-size:13px;">' + (log.email || '') + '</div>' +
+            '<div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Devices: ' + (log.devStr || 'Unknown') + '</div>';
+        } else if (log.type === 'online') {
+          item.innerHTML = '<div style="font-size:12px; color:var(--text-muted);">' + timeStr + ' - [LIVE PRESENCE]</div>' +
+            '<div style="font-weight:600; color:#4ADE80;">' + log.user + ' came online</div>';
+        } else if (log.type === 'offline') {
+          item.innerHTML = '<div style="font-size:12px; color:var(--text-muted);">' + timeStr + ' - [LIVE PRESENCE]</div>' +
+            '<div style="font-weight:600; color:#FF6B6B;">' + log.user + ' went offline</div>';
+        }
+        logList.appendChild(item);
+      });
+      if (sorted.length === 0) {
+         logList.innerHTML = '<div id="activityPlaceholder" style="padding:24px; color:var(--text-muted); text-align:center;">Waiting for activity...</div>';
+      }
+    };
+    
+    window.addHybridLog = function(log) {
+       const exists = window.hybridLogs.find(l => l.id === log.id);
+       if (!exists) window.hybridLogs.push(log);
+    };
+
     const authOverlay = document.getElementById('authOverlay');
     const authMessage = document.getElementById('authMessage');
     const statusText = document.getElementById('statusText');
@@ -847,37 +886,27 @@
                     });
                   });
                 }).on('presence', { event: 'join' }, ({ key, newPresences }) => {
-                  var logList = document.getElementById('activityLogList');
-                  var ph = document.getElementById('activityPlaceholder');
-                  if (ph) ph.remove();
-                  if(logList) {
-                    newPresences.forEach(function(p) {
-                      var item = document.createElement('div');
-                      item.style.padding = '12px 24px';
-                      item.style.borderBottom = '1px solid var(--border-light)';
-                      item.style.animation = 'fadeIn 0.3s ease';
-                      var name = (p.email || p.user || 'Unknown');
-                      item.innerHTML = '<div style="font-size:12px; color:var(--text-muted);">' + new Date().toLocaleString() + '</div>' +
-                        '<div style="font-weight:600; color:#4ADE80;">' + name + ' came online</div>';
-                      logList.insertBefore(item, logList.firstChild);
+                  newPresences.forEach(function(p) {
+                    var name = (p.email || p.user || 'Unknown');
+                    window.addHybridLog({
+                       id: 'online_' + name + '_' + Date.now(),
+                       type: 'online',
+                       time: Date.now(),
+                       user: name
                     });
-                  }
+                  });
+                  window.renderHybridLogs();
                 }).on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-                  var logList = document.getElementById('activityLogList');
-                  var ph = document.getElementById('activityPlaceholder');
-                  if (ph) ph.remove();
-                  if(logList) {
-                    leftPresences.forEach(function(p) {
-                      var item = document.createElement('div');
-                      item.style.padding = '12px 24px';
-                      item.style.borderBottom = '1px solid var(--border-light)';
-                      item.style.animation = 'fadeIn 0.3s ease';
-                      var name = (p.email || p.user || 'Unknown');
-                      item.innerHTML = '<div style="font-size:12px; color:var(--text-muted);">' + new Date().toLocaleString() + '</div>' +
-                        '<div style="font-weight:600; color:#FF6B6B;">' + name + ' went offline</div>';
-                      logList.insertBefore(item, logList.firstChild);
+                  leftPresences.forEach(function(p) {
+                    var name = (p.email || p.user || 'Unknown');
+                    window.addHybridLog({
+                       id: 'offline_' + name + '_' + Date.now(),
+                       type: 'offline',
+                       time: Date.now(),
+                       user: name
                     });
-                  }
+                  });
+                  window.renderHybridLogs();
                 }).subscribe(async (status) => {
                   if (status === 'SUBSCRIBED') {
                      await window.sessionRoom.track({ user: 'admin', joined_at: new Date().toISOString() });
@@ -1512,8 +1541,22 @@
         uptimeEl.textContent = '00:00:00';
       }
       
-      // Real-time activity log is managed by presence events.
-      // We no longer overwrite it with static sign-in data.
+      users.forEach(function(u) {
+        if (!u.last_sign_in_at) return;
+        var meta = u.user_metadata || {};
+        var devArr = Array.isArray(meta.devices) ? meta.devices : [];
+        var devStr = devArr.length > 0 ? devArr.map(function(d){ return d.id.substr(0,10); }).join(', ') : (meta.deviceId || 'Unknown');
+        
+        window.addHybridLog({
+           id: 'login_' + u.id + '_' + u.last_sign_in_at,
+           type: 'login',
+           time: new Date(u.last_sign_in_at).getTime(),
+           user: (meta.username || 'Unknown'),
+           email: u.email,
+           devStr: devStr
+        });
+      });
+      window.renderHybridLogs();
     }
 
     function renderUsers(users, bannedDevs) {
