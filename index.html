@@ -1628,7 +1628,22 @@ try {
 
       // Uptime Tick - uses backend API to bypass RLS
       var uptimeToken = '';
-      try { var s = await supabase.auth.getSession(); uptimeToken = s.data.session.access_token; } catch(e) {}
+      supabase.auth.getSession().then(s => {
+        if (s.data && s.data.session) uptimeToken = s.data.session.access_token;
+        
+        // Initial global uptime fetch
+        fetch('/api/uptime', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + uptimeToken },
+          body: JSON.stringify({ action: 'get' })
+        })
+        .then(res => res.json())
+        .then(initData => {
+          if (initData.success) valGlobal.textContent = fmtTime(initData.total_uptime);
+          else valGlobal.textContent = '00:00:00';
+        })
+        .catch(e => { valGlobal.textContent = '00:00:00'; });
+      }).catch(e => { valGlobal.textContent = '00:00:00'; });
       
       setInterval(async () => {
         sessionUptime += 10;
@@ -1659,20 +1674,6 @@ try {
           supabase.auth.updateUser({ data: { uptime: localUptime } });
         }
       });
-
-      // Initial global uptime fetch
-      try {
-        var initRes = await fetch('/api/uptime', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + uptimeToken },
-          body: JSON.stringify({ action: 'get' })
-        });
-        var initData = await initRes.json();
-        if (initData.success) valGlobal.textContent = fmtTime(initData.total_uptime);
-        else valGlobal.textContent = '00:00:00';
-      } catch(e) {
-        valGlobal.textContent = '00:00:00';
-      }
     }
   }
 } catch (e) {
