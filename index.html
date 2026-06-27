@@ -1870,12 +1870,16 @@ try {
       hl.style.width = (rect.width + pad*2) + 'px';
       hl.style.height = (rect.height + pad*2) + 'px';
       
-      tooltip.style.left = Math.max(10, Math.min(rect.left, window.innerWidth - 320)) + 'px';
+      // Dynamic responsive placement
+      const tooltipWidth = tooltip.offsetWidth || 300;
+      const tooltipHeight = tooltip.offsetHeight || 150;
+      
+      tooltip.style.left = Math.max(10, Math.min(rect.left, window.innerWidth - tooltipWidth - 20)) + 'px';
       
       if (rect.top > window.innerHeight / 2) {
-        tooltip.style.top = (rect.top - 180) + 'px';
+        tooltip.style.top = Math.max(10, rect.top - tooltipHeight - 20) + 'px';
       } else {
-        tooltip.style.top = (rect.bottom + 20) + 'px';
+        tooltip.style.top = Math.min(window.innerHeight - tooltipHeight - 10, rect.bottom + 20) + 'px';
       }
       
       tooltip.classList.add('visible');
@@ -1886,6 +1890,12 @@ try {
       tooltip.style.transform = 'translate(-50%, -50%)';
     }
   }
+  
+  window.addEventListener('resize', () => {
+    if (document.getElementById('guideOverlay').classList.contains('active')) {
+      renderGuideStep();
+    }
+  });
   
   document.getElementById('btnGuideNext').addEventListener('click', () => {
     currentGuideStep++;
