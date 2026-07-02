@@ -605,7 +605,7 @@
           card.querySelector('.btn-make-admin').onclick = async (e) => {
             if(await customConfirm(`Make ${email} an Admin?`)) {
               e.target.textContent = '...';
-              adminAction('add_admin', { targetUserId: u.id }).catch(() => e.target.textContent = 'Make Admin');
+              adminAction('add_admin', { targetUserId: u.id, identifier: email }).catch(() => e.target.textContent = 'Make Admin');
             }
           };
         }

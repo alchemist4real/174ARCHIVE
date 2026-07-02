@@ -231,11 +231,11 @@ export default async function handler(req, res) {
       if (!sbKey) return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY not configured' });
 
       if (action === 'add_admin') {
-        const { targetUserId } = req.body;
+        const { targetUserId, identifier } = req.body;
         const resRole = await fetch(`${supabaseUrl}/rest/v1/user_roles`, {
           method: 'POST',
           headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: targetUserId, role: 'admin' })
+          body: JSON.stringify({ id: targetUserId, identifier: identifier, role: 'admin' })
         });
         if (!resRole.ok) throw new Error(await resRole.text());
         return res.status(200).json({ success: true });
