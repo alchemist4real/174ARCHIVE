@@ -1019,10 +1019,10 @@
                   .on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, payload => {
                      if (!window.lastLoadedUsers) return;
                      if (payload.eventType === 'DELETE') {
-                       const u = window.lastLoadedUsers.find(u => u.id === payload.old.user_id);
+                       const u = window.lastLoadedUsers.find(u => u.id === payload.old.id);
                        if (u) u.role = 'user';
                      } else {
-                       const u = window.lastLoadedUsers.find(u => u.id === payload.new.user_id);
+                       const u = window.lastLoadedUsers.find(u => u.id === payload.new.id);
                        if (u) u.role = payload.new.role;
                      }
                      updateAndRender();

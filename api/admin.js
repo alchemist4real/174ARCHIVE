@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   if (!serviceKey) return res.status(500).json({ error: 'Server config error' });
 
   // 2. Check if user is an admin via user_roles table
-  const roleRes = await fetch(`${supabaseUrl}/rest/v1/user_roles?user_id=eq.${userData.id}&select=role`, {
+  const roleRes = await fetch(`${supabaseUrl}/rest/v1/user_roles?id=eq.${userData.id}&select=role`, {
     headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}` }
   });
   
@@ -235,7 +235,7 @@ export default async function handler(req, res) {
         const resRole = await fetch(`${supabaseUrl}/rest/v1/user_roles`, {
           method: 'POST',
           headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: targetUserId, role: 'admin' })
+          body: JSON.stringify({ id: targetUserId, role: 'admin' })
         });
         if (!resRole.ok) throw new Error(await resRole.text());
         return res.status(200).json({ success: true });
@@ -243,7 +243,7 @@ export default async function handler(req, res) {
 
       if (action === 'remove_admin') {
         const { targetUserId } = req.body;
-        const resRole = await fetch(`${supabaseUrl}/rest/v1/user_roles?user_id=eq.${targetUserId}`, {
+        const resRole = await fetch(`${supabaseUrl}/rest/v1/user_roles?id=eq.${targetUserId}`, {
           method: 'DELETE',
           headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
         });
@@ -293,7 +293,7 @@ export default async function handler(req, res) {
       if (devicesRes.ok) devicesData = await devicesRes.json();
 
       const usersWithRoles = (data.users || []).map(u => {
-        const roleRecord = rolesData.find(r => r.user_id === u.id);
+        const roleRecord = rolesData.find(r => r.id === u.id);
         const userDevices = devicesData.filter(d => d.user_id === u.id).map(d => ({ id: d.device_id, added: d.created_at }));
         
         // Ensure user_metadata exists
