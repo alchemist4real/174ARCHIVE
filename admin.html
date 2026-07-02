@@ -1019,10 +1019,10 @@
                   .on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, payload => {
                      if (!window.lastLoadedUsers) return;
                      if (payload.eventType === 'DELETE') {
-                       const u = window.lastLoadedUsers.find(u => u.id === payload.old.id);
+                       const u = window.lastLoadedUsers.find(u => u.email === payload.old.identifier || (u.user_metadata||{}).username === payload.old.identifier);
                        if (u) u.role = 'user';
                      } else {
-                       const u = window.lastLoadedUsers.find(u => u.id === payload.new.id);
+                       const u = window.lastLoadedUsers.find(u => u.email === payload.new.identifier || (u.user_metadata||{}).username === payload.new.identifier);
                        if (u) u.role = payload.new.role;
                      }
                      updateAndRender();
@@ -1761,7 +1761,7 @@
           card.querySelector('.btn-revoke').onclick = async (e) => {
             if(await customConfirm(`Remove admin privileges for ${email}?`)) {
               e.target.textContent = '...';
-              adminAction('remove_admin', { targetUserId: u.id }).catch(() => e.target.textContent = 'Revoke Admin');
+              adminAction('remove_admin', { identifier: email }).catch(() => e.target.textContent = 'Revoke Admin');
             }
           };
         }

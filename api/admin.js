@@ -234,16 +234,16 @@ export default async function handler(req, res) {
         const { targetUserId, identifier } = req.body;
         const resRole = await fetch(`${supabaseUrl}/rest/v1/user_roles`, {
           method: 'POST',
-          headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: targetUserId, identifier: identifier, role: 'admin' })
+          headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=ignore-duplicates' },
+          body: JSON.stringify({ identifier: identifier, role: 'admin' })
         });
         if (!resRole.ok) throw new Error(await resRole.text());
         return res.status(200).json({ success: true });
       }
 
       if (action === 'remove_admin') {
-        const { targetUserId } = req.body;
-        const resRole = await fetch(`${supabaseUrl}/rest/v1/user_roles?id=eq.${targetUserId}`, {
+        const { identifier } = req.body;
+        const resRole = await fetch(`${supabaseUrl}/rest/v1/user_roles?identifier=eq.${identifier}`, {
           method: 'DELETE',
           headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
         });
@@ -293,7 +293,7 @@ export default async function handler(req, res) {
       if (devicesRes.ok) devicesData = await devicesRes.json();
 
       const usersWithRoles = (data.users || []).map(u => {
-        const roleRecord = rolesData.find(r => r.id === u.id);
+        const roleRecord = rolesData.find(r => r.identifier === u.email || r.identifier === (u.user_metadata || {}).username);
         const userDevices = devicesData.filter(d => d.user_id === u.id).map(d => ({ id: d.device_id, added: d.created_at }));
         
         // Ensure user_metadata exists

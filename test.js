@@ -614,7 +614,7 @@
           card.querySelector('.btn-revoke').onclick = async (e) => {
             if(await customConfirm(`Remove admin privileges for ${email}?`)) {
               e.target.textContent = '...';
-              adminAction('remove_admin', { targetUserId: u.id }).catch(() => e.target.textContent = 'Revoke Admin');
+              adminAction('remove_admin', { identifier: email }).catch(() => e.target.textContent = 'Revoke Admin');
             }
           };
         }
