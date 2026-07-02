@@ -979,8 +979,63 @@
                 });
                 
                 window.sessionRoom.on('broadcast', { event: 'users_changed' }, () => {
-                  loadUsers();
+                  // Legacy broadcast handling removed in favor of postgres_changes
+                  // loadUsers();
                 });
+
+                // Real-time Database Subscriptions
+                const updateAndRender = () => {
+                  if (window.lastLoadedUsers && window.lastBannedDevs) {
+                    renderUsers(window.lastLoadedUsers, window.lastBannedDevs);
+                  }
+                };
+
+                window.dbChannel = supabaseClient.channel('db-changes')
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
+                     if (!window.lastLoadedUsers) return;
+                     if (payload.eventType === 'DELETE') {
+                       window.lastLoadedUsers = window.lastLoadedUsers.filter(u => u.id !== payload.old.id);
+                     } else if (payload.eventType === 'INSERT') {
+                       window.lastLoadedUsers.push({
+                         id: payload.new.id,
+                         email: payload.new.email,
+                         created_at: payload.new.created_at,
+                         user_metadata: { username: payload.new.username },
+                         app_metadata: { banned: payload.new.banned },
+                         role: 'user'
+                       });
+                     } else if (payload.eventType === 'UPDATE') {
+                       const u = window.lastLoadedUsers.find(u => u.id === payload.new.id);
+                       if (u) {
+                         u.email = payload.new.email;
+                         u.user_metadata = u.user_metadata || {};
+                         u.user_metadata.username = payload.new.username;
+                         u.app_metadata = u.app_metadata || {};
+                         u.app_metadata.banned = payload.new.banned;
+                       }
+                     }
+                     updateAndRender();
+                  })
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, payload => {
+                     if (!window.lastLoadedUsers) return;
+                     if (payload.eventType === 'DELETE') {
+                       const u = window.lastLoadedUsers.find(u => u.id === payload.old.user_id);
+                       if (u) u.role = 'user';
+                     } else {
+                       const u = window.lastLoadedUsers.find(u => u.id === payload.new.user_id);
+                       if (u) u.role = payload.new.role;
+                     }
+                     updateAndRender();
+                  })
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'user_devices' }, payload => {
+                     // For simplicity, we just trigger a full reload when devices change, 
+                     // or we can optimize if needed. Full reload is safer for complex nested arrays.
+                     loadUsers();
+                  })
+                  .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, payload => {
+                     loadUsers();
+                  })
+                  .subscribe();
                 
                 const btnSendAnn = document.getElementById('btnSendAnnouncement');
                 if (btnSendAnn) {
@@ -1569,6 +1624,8 @@
         });
         const data = await res.json();
         if (data.success) {
+          window.lastLoadedUsers = data.users;
+          window.lastBannedDevs = bannedDevs;
           renderUsers(data.users, bannedDevs);
           renderDashboard(data.users, data.globalStats);
         } else {
@@ -1695,10 +1752,7 @@
           card.querySelector('.btn-make-admin').onclick = async (e) => {
             if(await customConfirm(`Make ${email} an Admin?`)) {
               e.target.textContent = '...';
-              adminAction('add_admin', { targetUserId: u.id }).then(() => {
-                 loadUsers();
-                 if(window.sessionRoom) window.sessionRoom.send({ type: 'broadcast', event: 'users_changed' });
-              });
+              adminAction('add_admin', { targetUserId: u.id }).catch(() => e.target.textContent = 'Make Admin');
             }
           };
         }
@@ -1707,10 +1761,7 @@
           card.querySelector('.btn-revoke').onclick = async (e) => {
             if(await customConfirm(`Remove admin privileges for ${email}?`)) {
               e.target.textContent = '...';
-              adminAction('remove_admin', { targetUserId: u.id }).then(() => {
-                 loadUsers();
-                 if(window.sessionRoom) window.sessionRoom.send({ type: 'broadcast', event: 'users_changed' });
-              });
+              adminAction('remove_admin', { targetUserId: u.id }).catch(() => e.target.textContent = 'Revoke Admin');
             }
           };
         }
@@ -1720,10 +1771,7 @@
             const actionText = isBanned ? 'unban' : 'ban';
             if(await customConfirm(`Are you sure you want to ${actionText} ${email}?`)) {
               e.target.textContent = '...';
-              adminAction('ban_user', { userId: u.id, banned: !isBanned }).then(() => {
-                 loadUsers();
-                 if(window.sessionRoom) window.sessionRoom.send({ type: 'broadcast', event: 'users_changed' });
-              });
+              adminAction('ban_user', { userId: u.id, banned: !isBanned }).catch(() => e.target.textContent = actionText === 'ban' ? 'Ban' : 'Unban');
             }
           };
         }
@@ -1732,10 +1780,7 @@
           card.querySelector('.btn-del-user').onclick = async (e) => {
             if(await customConfirm(`WARNING: This will permanently delete the user ${email} from the database. This action cannot be undone. Proceed?`)) {
               e.target.textContent = '...';
-              adminAction('delete_user', { userId: u.id }).then(() => {
-                 loadUsers();
-                 if(window.sessionRoom) window.sessionRoom.send({ type: 'broadcast', event: 'users_changed' });
-              });
+              adminAction('delete_user', { userId: u.id }).catch(() => e.target.textContent = 'Delete');
             }
           };
         }

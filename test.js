@@ -605,7 +605,7 @@
           card.querySelector('.btn-make-admin').onclick = async (e) => {
             if(await customConfirm(`Make ${email} an Admin?`)) {
               e.target.textContent = '...';
-              adminAction('add_admin', { newAdmin: email }).then(() => loadUsers());
+              adminAction('add_admin', { targetUserId: u.id }).catch(() => e.target.textContent = 'Make Admin');
             }
           };
         }
@@ -614,10 +614,7 @@
           card.querySelector('.btn-revoke').onclick = async (e) => {
             if(await customConfirm(`Remove admin privileges for ${email}?`)) {
               e.target.textContent = '...';
-              adminAction('remove_admin', { targetAdmin: email }).then(() => {
-                 window.adminsList = window.adminsList.filter(a => a !== email);
-                 loadUsers();
-              });
+              adminAction('remove_admin', { targetUserId: u.id }).catch(() => e.target.textContent = 'Revoke Admin');
             }
           };
         }
@@ -627,8 +624,7 @@
             const actionText = isBanned ? 'unban' : 'ban';
             if(await customConfirm(`Are you sure you want to ${actionText} ${email}?`)) {
               e.target.textContent = '...';
-              const newMeta = { ...meta, banned: !isBanned };
-              adminAction('ban_user', { userId: u.id, user_metadata: newMeta }).then(() => loadUsers());
+              adminAction('ban_user', { userId: u.id, banned: !isBanned }).catch(() => e.target.textContent = actionText === 'ban' ? 'Ban' : 'Unban');
             }
           };
         }
@@ -637,7 +633,7 @@
           card.querySelector('.btn-del-user').onclick = async (e) => {
             if(await customConfirm(`WARNING: This will permanently delete the user ${email} from the database. This action cannot be undone. Proceed?`)) {
               e.target.textContent = '...';
-              adminAction('delete_user', { userId: u.id }).then(() => loadUsers());
+              adminAction('delete_user', { userId: u.id }).catch(() => e.target.textContent = 'Delete');
             }
           };
         }
