@@ -1336,30 +1336,32 @@ try {
     const btnForgotPwd = document.getElementById('btnForgotPwd');
     const authMsg = document.getElementById('authMsg');
 
-    function getDeviceId() {
-      let id = localStorage.getItem('capsules_device_id');
-      if (!id) {
-        id = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-        localStorage.setItem('capsules_device_id', id);
-      }
-      return id;
+    let fpDeviceId = localStorage.getItem('capsules_device_id') || 'dev_' + Math.random().toString(36).substr(2, 9);
+    function getDeviceId() { return fpDeviceId; }
+
+    function showDeviceBanError() {
+      document.body.innerHTML = `
+        <div style="display:flex; height:100vh; width:100vw; background:#0a0a0a; color:#ff3333; justify-content:center; align-items:center; flex-direction:column; font-family: 'Courier New', Courier, monospace; text-align:center; position:fixed; z-index:99999999; top:0; left:0;">
+          <h1 class="glitch-text" style="font-size:3rem; margin-bottom:20px; letter-spacing:2px;">SORRY FOR KICKING YOU OUT OF OUR SANCTUARY</h1>
+          <p style="color:#888; font-size:1.2rem;">Your device has been permanently blocked.</p>
+        </div>
+      `;
     }
 
-    function syncDeviceId(session) {
-      if(session && session.user && session.user.user_metadata) {
-        let meta = session.user.user_metadata;
-        let devices = Array.isArray(meta.devices) ? meta.devices : [];
-        
-        // Migrate old string deviceId
-        if (typeof meta.deviceId === 'string' && !devices.some(d => d.id === meta.deviceId)) {
-           devices.push({ id: meta.deviceId, added: new Date().toISOString() });
-        }
-        
+    import('https://openfpcdn.io/fingerprintjs/v4').then(FingerprintJS => FingerprintJS.load()).then(fp => fp.get()).then(result => {
+      fpDeviceId = result.visitorId;
+      localStorage.setItem('capsules_device_id', fpDeviceId);
+      if (window.bannedDevicesList && window.bannedDevicesList.includes(fpDeviceId)) {
+         showDeviceBanError();
+      }
+    });
+
+    async function syncDeviceId(session) {
+      if(session && session.user) {
         const currentDev = getDeviceId();
-        if (!devices.some(d => d.id === currentDev)) {
-           devices.push({ id: currentDev, added: new Date().toISOString() });
-           supabase.auth.updateUser({ data: { devices, deviceId: null } }).catch(e => console.log('Device sync error', e));
-        }
+        await supabase.from('user_devices').insert([
+          { user_id: session.user.id, device_id: currentDev }
+        ]).select().catch(e => {}); // ignore duplicate or RLS errors
       }
     }
 
@@ -1367,14 +1369,10 @@ try {
     fetch('/api/config')
       .then(r => r.json())
       .then(config => {
+        window.bannedDevicesList = config.bannedDevices || [];
         const dId = getDeviceId();
-        if (config.bannedDevices && config.bannedDevices.includes(dId)) {
-          document.body.innerHTML = `
-            <div style="display:flex; height:100vh; width:100vw; background:#0a0a0a; color:#ff3333; justify-content:center; align-items:center; flex-direction:column; font-family: 'Courier New', Courier, monospace; text-align:center; position:fixed; z-index:99999999; top:0; left:0;">
-              <h1 class="glitch-text" style="font-size:3rem; margin-bottom:20px; letter-spacing:2px;">SORRY FOR KICKING YOU OUT OF OUR SANCTUARY</h1>
-              <p style="color:#888; font-size:1.2rem;">Your device has been permanently blocked.</p>
-            </div>
-          `;
+        if (window.bannedDevicesList.includes(dId)) {
+          showDeviceBanError();
           return;
         }
 
@@ -1436,20 +1434,28 @@ try {
     // Check initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        if(session.user && session.user.user_metadata && session.user.user_metadata.banned) {
+        if(session.user && ((session.user.user_metadata && session.user.user_metadata.banned) || (session.user.app_metadata && session.user.app_metadata.banned))) {
           alert('YOUR ACCOUNT HAS BEEN BANNED BY THE ADMINISTRATOR.');
           await supabase.auth.signOut();
           return;
         }
 
-        if(session.user && session.user.user_metadata) {
-          if (session.user.user_metadata.uptime !== undefined) {
-            baseUptime = parseInt(session.user.user_metadata.uptime, 10) || 0;
-            localUptime = baseUptime + sessionUptime;
-            const vl = document.getElementById('valLocal');
-            if(vl) vl.textContent = fmtTime(localUptime);
-          }
-          if (session.user.user_metadata.username) {
+        if(session.user) {
+          supabase.from('user_stats').select('total_uptime').eq('user_id', session.user.id).single().then(({ data }) => {
+            if (data) {
+              baseUptime = data.total_uptime || 0;
+              localUptime = baseUptime + sessionUptime;
+              const vl = document.getElementById('valLocal');
+              if(vl) vl.textContent = fmtTime(localUptime);
+            }
+          });
+          
+          if(session.user.user_metadata) {
+            if (session.user.user_metadata.uptime !== undefined) {
+              // Legacy migration
+              baseUptime = Math.max(baseUptime, parseInt(session.user.user_metadata.uptime, 10) || 0);
+            }
+            if (session.user.user_metadata.username) {
             currentUsername = session.user.user_metadata.username;
             authUsername.value = currentUsername;
             updateGreeting();
@@ -1475,19 +1481,25 @@ try {
 
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN') {
-        if(session && session.user && session.user.user_metadata && session.user.user_metadata.banned) {
+        if(session && session.user && ((session.user.user_metadata && session.user.user_metadata.banned) || (session.user.app_metadata && session.user.app_metadata.banned))) {
           alert('YOUR ACCOUNT HAS BEEN BANNED BY THE ADMINISTRATOR.');
           await supabase.auth.signOut();
           return;
         }
 
-        if(session && session.user && session.user.user_metadata) {
-          if (session.user.user_metadata.uptime !== undefined) {
-            baseUptime = parseInt(session.user.user_metadata.uptime, 10) || 0;
-            localUptime = baseUptime + sessionUptime;
-            const vl = document.getElementById('valLocal');
-            if(vl) vl.textContent = fmtTime(localUptime);
-          }
+        if(session && session.user) {
+          supabase.from('user_stats').select('total_uptime').eq('user_id', session.user.id).single().then(({ data }) => {
+            if (data) {
+              baseUptime = data.total_uptime || 0;
+              localUptime = baseUptime + sessionUptime;
+              const vl = document.getElementById('valLocal');
+              if(vl) vl.textContent = fmtTime(localUptime);
+            }
+          });
+          if(session.user.user_metadata) {
+            if (session.user.user_metadata.uptime !== undefined) {
+              baseUptime = Math.max(baseUptime, parseInt(session.user.user_metadata.uptime, 10) || 0);
+            }
           if (session.user.user_metadata.username) {
             currentUsername = session.user.user_metadata.username;
             authUsername.value = currentUsername;
@@ -1775,10 +1787,18 @@ try {
         valLocal.textContent = fmtTime(localUptime);
         
         if (sessionUptime % 60 === 0) {
-          supabase.auth.updateUser({ data: { uptime: localUptime } }).catch(e => console.log('Uptime save error', e));
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session && session.user) {
+              supabase.from('user_stats').upsert({ user_id: session.user.id, total_uptime: localUptime, last_updated: new Date().toISOString() })
+                .catch(e => console.log('Local uptime save error', e));
+            }
+          });
         }
         
-        try {
+        var uptimeToken = '';
+        supabase.auth.getSession().then(async (s) => {
+          if (s.data && s.data.session) uptimeToken = s.data.session.access_token;
+          if (!uptimeToken) return;
           var res = await fetch('/api/uptime', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + uptimeToken },
@@ -1788,14 +1808,19 @@ try {
           if (data.success) {
             valGlobal.textContent = fmtTime(data.total_uptime);
           }
-        } catch(e) {
+        }).catch(e => {
           console.log('Global uptime sync error', e);
-        }
+        });
       }, 10000);
 
       window.addEventListener('beforeunload', () => {
         if (sessionUptime % 60 !== 0) {
-          supabase.auth.updateUser({ data: { uptime: localUptime } });
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session && session.user) {
+              supabase.from('user_stats').upsert({ user_id: session.user.id, total_uptime: localUptime, last_updated: new Date().toISOString() })
+                .catch(e => console.log('Local uptime save error', e));
+            }
+          });
         }
       });
     }

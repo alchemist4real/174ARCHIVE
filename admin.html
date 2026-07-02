@@ -1627,8 +1627,9 @@
       users.forEach(function(u) {
         var email = u.email;
         var meta = u.user_metadata || {};
+        var appMeta = u.app_metadata || {};
         var username = meta.username || '-';
-        var isBanned = meta.banned === true;
+        var isBanned = appMeta.banned === true || meta.banned === true;
         
         var devices = Array.isArray(meta.devices) ? meta.devices.slice() : [];
         if (typeof meta.deviceId === 'string' && !devices.some(function(d){ return d.id === meta.deviceId; })) {
@@ -1719,8 +1720,7 @@
             const actionText = isBanned ? 'unban' : 'ban';
             if(await customConfirm(`Are you sure you want to ${actionText} ${email}?`)) {
               e.target.textContent = '...';
-              const newMeta = { ...meta, banned: !isBanned };
-              adminAction('ban_user', { userId: u.id, user_metadata: newMeta }).then(() => {
+              adminAction('ban_user', { userId: u.id, banned: !isBanned }).then(() => {
                  loadUsers();
                  if(window.sessionRoom) window.sessionRoom.send({ type: 'broadcast', event: 'users_changed' });
               });

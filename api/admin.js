@@ -249,11 +249,17 @@ export default async function handler(req, res) {
       }
 
       if (action === 'ban_user') {
-         const { userId, user_metadata } = req.body;
+         const { userId, banned } = req.body;
+         const getSbRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+           headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+         });
+         const userData = await getSbRes.json();
+         const newAppMeta = { ...userData.app_metadata, banned: !!banned };
+         
          const sbRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
            method: 'PUT',
            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
-           body: JSON.stringify({ user_metadata })
+           body: JSON.stringify({ app_metadata: newAppMeta })
          });
          if (!sbRes.ok) throw new Error(await sbRes.text());
          return res.status(200).json({ success: true });
@@ -277,9 +283,21 @@ export default async function handler(req, res) {
       let rolesData = [];
       if (rolesRes.ok) rolesData = await rolesRes.json();
 
+      const devicesRes = await fetch(`${supabaseUrl}/rest/v1/user_devices?select=*`, {
+        headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+      });
+      let devicesData = [];
+      if (devicesRes.ok) devicesData = await devicesRes.json();
+
       const usersWithRoles = (data.users || []).map(u => {
         const roleRecord = rolesData.find(r => r.user_id === u.id);
-        return { ...u, role: roleRecord ? roleRecord.role : 'user' };
+        const userDevices = devicesData.filter(d => d.user_id === u.id).map(d => ({ id: d.device_id, added: d.created_at }));
+        
+        // Ensure user_metadata exists
+        const user_metadata = u.user_metadata || {};
+        user_metadata.devices = userDevices;
+
+        return { ...u, user_metadata, role: roleRecord ? roleRecord.role : 'user' };
       });
 
       return res.status(200).json({ success: true, users: usersWithRoles });
